@@ -1,4 +1,6 @@
-# Concept of MLE
+# Maximum Likelihood Estimation in AB testing
+
+For quite some time, we’ve employed A/B testing as a means to examine hypotheses and improve outcomes through the iteration of various experiments. Thanks to advanced tools available on A/B testing websites, we can now readily obtain sample sizes, test durations, and p-values. But how does Maximum Likelihood Estimation factor into this? In the following sections, I’ll provide a brief overview of MLE and its relevance to A/B testing.
 
 ## MLE usage
 
@@ -65,7 +67,7 @@ $\mu = \frac{1}{n}\sum_{i=1}^{n} x_i$
 
 So, the maximum likelihood estimate for $\mu$ is simply the sample mean of the observed data points.
 
-# Relationship with AB testing
+## Relationship with AB testing
 
 In summary, MLE is a method for finding the parameter values that maximize the likelihood of observing the given data. In this example, we found that the MLE for the mean ($\mu$) of a Gaussian distribution is the sample mean of the observed data. The process involves defining the likelihood function, taking its logarithm, finding the derivative, and solving for the parameter of interest. This methodology can be applied to various statistical models with different likelihood functions.
 

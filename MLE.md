@@ -65,4 +65,41 @@ $\mu = \frac{1}{n}\sum_{i=1}^{n} x_i$
 
 So, the maximum likelihood estimate for $\mu$ is simply the sample mean of the observed data points.
 
+# Relationship with AB testing
+
 In summary, MLE is a method for finding the parameter values that maximize the likelihood of observing the given data. In this example, we found that the MLE for the mean ($\mu$) of a Gaussian distribution is the sample mean of the observed data. The process involves defining the likelihood function, taking its logarithm, finding the derivative, and solving for the parameter of interest. This methodology can be applied to various statistical models with different likelihood functions.
+
+Maximum Likelihood Estimation (MLE) and A/B testing are two different but related concepts in the field of statistics and experimentation, often used together in the context of hypothesis testing and data analysis. Here's how they are related:
+
+1. **Hypothesis Testing:** Both MLE and A/B testing involve hypothesis testing.
+
+   - **MLE**: In MLE, you are typically trying to estimate the parameters of a statistical model, such as the mean or variance. The hypothesis testing aspect comes into play when you want to test whether a specific value of the parameter (e.g., a null hypothesis) is a good fit for your data or not.
+
+   - **A/B Testing**: A/B testing, also known as split testing, is a method used to compare two or more versions of something (e.g., a web page, an app feature) to determine which one performs better. It involves hypotheses like the null hypothesis (no difference between versions) and the alternative hypothesis (there is a significant difference).
+
+2. **Parameter Estimation:** MLE is often used for parameter estimation in statistical models, which can be crucial in A/B testing.
+
+   - **MLE**: As explained earlier, MLE helps you find the parameter values that maximize the likelihood of observing your data. In A/B testing, this could be used to estimate parameters like the conversion rate, click-through rate, or other metrics for each version of the test.
+
+   - **A/B Testing**: After estimating parameters using MLE or other methods, you can use statistical tests to compare the performance of different versions in an A/B test. For example, you might use MLE to estimate conversion rates for two web page variants and then use hypothesis testing to determine if the difference between them is statistically significant.
+
+3. **Decision Making:** Both MLE and A/B testing ultimately play a role in decision-making based on data.
+
+   - **MLE**: MLE helps you make decisions about the best-fitting parameters for your data distribution. For example, it might help you determine the best estimate for a conversion rate.
+
+   - **A/B Testing**: A/B testing helps you make decisions about which version of a product or feature is more effective based on observed data. You decide whether to adopt one version over the other(s) based on statistical significance and practical significance.
+
+In summary, MLE is a statistical technique used for parameter estimation, which can be applied within the context of A/B testing. A/B testing, on the other hand, involves hypothesis testing to compare different versions of something and make data-driven decisions. MLE can be used to estimate the parameters needed for hypothesis testing in A/B testing scenarios, helping you assess the performance of different variants accurately.
+
+## Example of AB testing on CTR 
+In the context of an A/B test where you are comparing the Click-Through Rate (CTR) of two variants (A and B), you can use Maximum Likelihood Estimation (MLE) to estimate the CTR for each variant, and then calculate the sample mean of these estimates to determine the overall test result.
+
+Here's how you can do it step by step:
+
+1. **Estimate CTR for each variant using MLE:** For each variant (A and B), you can use MLE to estimate the Click-Through Rate. This involves counting the number of clicks divided by the number of impressions for each variant. MLE will give you the parameter estimates that maximize the likelihood of observing the data for each variant.
+
+2. **Calculate Sample Means:** Once you have estimated the CTR for each variant, you can calculate the sample mean for both A and B. These sample means represent the average CTR for each variant based on your sample data.
+
+3. **Compare the Means:** To determine the overall test result, you can compare the sample means of the CTR for variants A and B. You might use hypothesis testing techniques (e.g., a t-test or z-test) to assess whether the difference in sample means is statistically significant. This will help you decide if there is a meaningful difference in CTR between the two variants.
+
+In summary, by estimating the CTR for each variant using MLE and then calculating the sample means, you can assess the performance of the A/B test and determine if one variant has a significantly higher or lower CTR compared to the other. MLE helps you estimate the underlying parameters (CTR in this case) based on your observed data, and hypothesis testing helps you make statistical inferences about the results of your A/B test.

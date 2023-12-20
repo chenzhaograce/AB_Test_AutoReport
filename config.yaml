@@ -1,0 +1,16 @@
+#file location
+pretest_path: 'Mock Dataset/AB Testing Take Home Dataset/pretest.csv' #choose last 30 days pretest data
+test_path: 'Mock Dataset/AB Testing Take Home Dataset/test.csv' #choose last 30 days test data
+
+#metrics and parameters
+conversion_metric: 'converted' #eg. clicks, converted, sales, spend
+id_column: 'impression_id' #eg. impression_id, user_id
+spend_column: 'spend' #eg. spend, cost
+binary: True #True for proportion, False for mean
+
+# Power Analysis Input Parameters
+MDE : 0.1 ##Empirical threshold eg.10% lift or 5% lift
+significance_level : 0.05 ##Empirical threshold eg. 5% or 1%
+power : 0.8 ##Empirical threshold eg. 80% or 90%
+group_ratio : 1 ##Empirical threshold eg. 1:1 or 1:2
+AA_alpha : 0.05 ##Empirical threshold eg. 5% or 1%

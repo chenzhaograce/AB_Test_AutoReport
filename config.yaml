@@ -1,6 +1,6 @@
 #file location
-pretest_path: 'Mock Dataset/AB Testing Take Home Dataset/pretest.csv' #choose last 30 days pretest data
-test_path: 'Mock Dataset/AB Testing Take Home Dataset/test.csv' 
+pretest_path: 'data/pretest.csv' #choose last 30 days pretest data
+test_path: 'data/test.csv' 
 
 #metrics and parameters
 conversion_metric: 'converted' #eg. clicks, converted, sales, spend

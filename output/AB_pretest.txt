@@ -13,7 +13,7 @@ Sample start date: 2023-05-01, Sample end date: 2023-05-31 , duration: 31 days
 Average conversion: 0.0312
 
 ## Power Analysis, Test Duration and Budget:
-Sample size needed in total: 50994
+Sample size needed in total: 101989
 Test duration needed: 14 days
 Budget needed in total: 50951.61
 

@@ -23,7 +23,7 @@ class ABTestAnalyzer:
         self.pretest_path = config['pretest_path']
         self.conversion_metric = config['conversion_metric']
         self.id_column = config['id_column']
-        self.spend_column = config['spend_column']
+        self.spend_column = config.get('spend_column', None)  # Default to None if 'spend_column' is not found
         self.binary = config['binary']
         self.MDE = config['MDE']
         self.significance_level = config['significance_level']
@@ -77,7 +77,7 @@ class ABTestAnalyzer:
             return adjusted_test_duration, start_date, end_date, sample_duration
         except Exception as e:
             print(f"Error calculating test duration: {e}")
-    
+         
     def budget(self, data):
         sample_size = self.calculate_sample_size(data)
         spend = data[self.spend_column].sum()
@@ -146,9 +146,12 @@ start_date = analyzer.test_duration(analyzer.pretest_data)[1].strftime('%Y-%m-%d
 end_date = analyzer.test_duration(analyzer.pretest_data)[2].strftime('%Y-%m-%d')
 sample_duration = analyzer.test_duration(analyzer.pretest_data)[3]
 avg_conversion = analyzer.pretest_data[analyzer.conversion_metric].mean()
-budget = analyzer.budget(analyzer.pretest_data)
 data_columns=analyzer.pretest_data.columns.values
 data_shape=analyzer.pretest_data.shape
+if analyzer.spend_column is not None:
+    budget = analyzer.budget(analyzer.pretest_data)
+else:
+    budget = None  # or some default value
 
 # AA test
 # Check if the data contains 'AA_test'
@@ -187,7 +190,10 @@ with open(os.path.join(directory, 'AB_pretest.txt'), 'w') as f:
     f.write('\n## Power Analysis, Test Duration and Budget:\n')
     f.write(f'Sample size needed in total: {sample_size:.0f}\n')
     f.write(f'Test duration needed: {test_duration} days\n')
-    f.write(f'Budget needed in total: {budget:.2f}\n')
+    if analyzer.spend_column is not None:
+        f.write(f'Budget needed in total: {budget:.2f}\n')
+    else:
+        pass
     
     if 'AA_test' in analyzer.pretest_data['experiment'].unique():
         f.write('\n## Pretest Validation - AA Test:\n')

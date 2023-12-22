@@ -5,7 +5,7 @@ test_path: 'Mock Dataset/AB Testing Take Home Dataset/test.csv' #choose last 30 
 #metrics and parameters
 conversion_metric: 'converted' #eg. clicks, converted, sales, spend
 id_column: 'impression_id' #eg. impression_id, user_id
-spend_column: 'spend' #eg. spend, cost
+spend_column: 'spend' #eg. spend, cost, if no spend column, leave it blank
 binary: True #True for proportion, False for mean
 
 # Power Analysis Input Parameters

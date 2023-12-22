@@ -1,0 +1,24 @@
+# AB Test Pretest Report
+
+## Pretest Parameters:
+Minimum Detectable Effect: 0.1
+Significance Level: 0.05
+Power: 0.8
+
+## Sample Data Preparation:
+Number of rows: 309903, Number of columns: 6
+Data columns: ['impression_id' 'date' 'experiment' 'group' 'converted' 'spend']
+Conversion metric: converted
+Sample start date: 2023-05-01, Sample end date: 2023-05-31 , duration: 31 days
+Average conversion: 0.0312
+
+## Power Analysis, Test Duration and Budget:
+Sample size needed in total: 101989
+Test duration needed: 14 days
+Budget needed in total: 50951.61
+
+## Pretest Validation - AA Test:
+AA test start date: 2023-05-18, AA test end date: 2023-05-31, duration: 14 days
+AA control average conversion: 0.0307, AA treatment average conversion: 0.031015
+AA significance level: 0.05, AA test p-value 0.876
+AA test validation: No significant difference found. Proceed with AB test.

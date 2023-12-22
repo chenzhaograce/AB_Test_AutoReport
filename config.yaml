@@ -1,10 +1,16 @@
 #file location
-pretest_path: 'data/pretest.csv' #choose last 30 days pretest data
-test_path: 'data/test.csv' 
+pretest_path: 'Mock Dataset/AB Testing Take Home Dataset/pretest.csv' #choose last 30 days pretest data
+test_path: 'Mock Dataset/AB Testing Take Home Dataset/test.csv' 
 
 #metrics and parameters
 conversion_metric: 'converted' #eg. clicks, converted, sales, spend
 id_column: 'impression_id' #eg. impression_id, user_id
+AB_metric: 'landingpage_test' #row name for experiment group
+date_column: 'date' #eg. date, day, if no date column
+group_column: 'group' #eg. group, if no group column
+experiment_column: 'experiment' #eg. experiment
+control_group: 0 #eg. 0, 1, or 'control', 'treatment'
+treatment_group: 1 #eg. 0, 1, or 'control', 'treatment'
 spend_column: 'spend' #eg. spend, cost, if no spend column, leave it blank
 binary: True #True for proportion, False for mean
 
@@ -15,12 +21,11 @@ power : 0.8 #Empirical threshold eg. 80% or 90%
 group_ratio : 1 # 1 for 50/50, 2 for 2/1, 3 for 3/1, etc.
 
 # AA Test Input Parameters
-AA_metric: 'AA_test' #row name for experiment group
+AA_metric: 'AA_test' #row name for experiment group, if no AA test, leave it blank
 AA_alpha : 0.05 ##Empirical threshold eg. 5% or 1%
 
 # Sample Ratio Mismatch Input Parameters
 SRM_alpha : 0.05 ##Empirical threshold eg. 5% or 1%
-AB_metric: 'landingpage_test' #row name for experiment group
 AB_alpha : 0.05 #Empirical threshold eg. 5% or 1%
 
 # Novelty Effect Input Parameters

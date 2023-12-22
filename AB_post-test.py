@@ -265,4 +265,4 @@ with open(os.path.join(directory, 'AB_post-test.txt'), 'w') as f:
         else:
             f.write(f'The test did not result in a statistically significant difference in performance compared to the control group. Therefore, we cannot conclude that the test is successful. We need to repeat the test with a larger sample size to ascertain whether the new test genuinely results in a {int(100*analyzer.MDE)}% increase.')
     #Save the plot in the directory
-    plt.savefig(os.path.join(directory, 'novelty_test.png'))
+    plt.savefig(os.path.join(directory, 'AB_test.png'))

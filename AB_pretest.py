@@ -176,8 +176,8 @@ if not os.path.exists(directory):
     os.makedirs(directory)
 
 # Write the results to a file
-with open(os.path.join(directory, 'AB_pretest.txt'), 'w') as f:
-    f.write('# AB Test Pretest Results\n')
+with open(os.path.join(directory, 'AB_pretest_report.txt'), 'w') as f:
+    f.write('# AB Test Pretest Report\n')
     f.write(f'\n## Pretest Parameters:\n')
     f.write(f'Minimum Detectable Effect: {analyzer.MDE}\n')
     f.write(f'Significance Level: {analyzer.significance_level}\n')

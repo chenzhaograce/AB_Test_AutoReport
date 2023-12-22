@@ -217,8 +217,8 @@ if not os.path.exists(directory):
     os.makedirs(directory)
 
 # Write the results to a txt file
-with open(os.path.join(directory, 'AB_post-test.txt'), 'w') as f:
-    f.write(f'# AB Test Post-test Results \n')
+with open(os.path.join(directory, 'AB_post-test_report.txt'), 'w') as f:
+    f.write(f'# AB Test Post-test Report \n')
     f.write(f'\n## Test Parameters \n')
     f.write(f'Minimum Detectable Effect: {analyzer.MDE}\n')
     f.write(f'AB Test significance Level: {analyzer.AB_alpha}\n')

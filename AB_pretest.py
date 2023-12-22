@@ -1,3 +1,4 @@
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -5,6 +6,7 @@ from statsmodels.stats.power import tt_ind_solve_power
 from statsmodels.stats.proportion import proportions_chisquare
 from statsmodels.stats.weightstats import ttest_ind
 import statsmodels.api as sm
+import statsmodels.stats.api as sms
 import math
 import os
 from docx import Document
@@ -19,7 +21,6 @@ class ABTestAnalyzer:
             config = yaml.safe_load(file)
 
         self.pretest_path = config['pretest_path']
-        self.test_path = config['test_path']
         self.conversion_metric = config['conversion_metric']
         self.id_column = config['id_column']
         self.spend_column = config['spend_column']
@@ -29,15 +30,13 @@ class ABTestAnalyzer:
         self.power = config['power']
         self.group_ratio = config['group_ratio']
         self.AA_alpha = config['AA_alpha']
+        self.AA_metric = config['AA_metric']
         self.pretest_data = None
-        self.test_data = None
 
     def load_data(self):
         try:
             self.pretest_data = pd.read_csv(self.pretest_path, low_memory=False)
-            self.test_data = pd.read_csv(self.test_path, low_memory=False)
             self.pretest_data['date'] = pd.to_datetime(self.pretest_data['date'], format='%m/%d/%y')
-            self.test_data['date'] = pd.to_datetime(self.test_data['date'], format='%m/%d/%y')
         except Exception as e:
             print(f"Error loading data: {e}")
 
@@ -88,7 +87,7 @@ class ABTestAnalyzer:
         return budget
 
     def AA_duration(self, data):
-        AA_test_data = data[data['experiment'] == 'AA_test']
+        AA_test_data = data[data['experiment'] == self.AA_metric]
         try:
             start_date = AA_test_data['date'].min()
             end_date = AA_test_data['date'].max()
@@ -99,7 +98,7 @@ class ABTestAnalyzer:
             
 
     def AA_test(self, data):
-        AA_test_data = data[data['experiment'] == 'AA_test']
+        AA_test_data = data[data['experiment'] == self.AA_metric]
         control_group = AA_test_data[AA_test_data['group'] == 0][self.conversion_metric]
         treatment_group = AA_test_data[AA_test_data['group'] == 1][self.conversion_metric]
         try: 
@@ -113,11 +112,11 @@ class ABTestAnalyzer:
             print(f"Error calculating p-value: {e}")
     
     def AA_plot(self, data):
-        AA_test_data = data[data['experiment'] == 'AA_test']
+        AA_test_data = data[data['experiment'] == self.AA_metric]
         control_group = AA_test_data[AA_test_data['group'] == 0].groupby('date')[self.conversion_metric].mean()
         treatment_group = AA_test_data[AA_test_data['group'] == 1].groupby('date')[self.conversion_metric].mean()
         exp_days = range(1, AA_test_data['date'].nunique() + 1)
-        f, ax = plt.subplots(figsize=(10, 6))
+        f, ax = plt.subplots(figsize=(12, 6))
         ax.plot(exp_days, control_group, label='Control', color='b')
         ax.plot(exp_days, treatment_group, label='Treatment', color='g')
         ax.set_xticks(exp_days)
@@ -138,7 +137,6 @@ class ABTestAnalyzer:
             print(f"Error validating AA test: {e}")
 
 # Example usage
-
 analyzer=ABTestAnalyzer(config_path)
 analyzer.load_data()
 # Call the functions and store the results
@@ -147,16 +145,10 @@ test_duration = analyzer.test_duration(analyzer.pretest_data)[0]
 start_date = analyzer.test_duration(analyzer.pretest_data)[1].strftime('%Y-%m-%d')
 end_date = analyzer.test_duration(analyzer.pretest_data)[2].strftime('%Y-%m-%d')
 sample_duration = analyzer.test_duration(analyzer.pretest_data)[3]
-avg_conversion = analyzer.pretest_data[analyzer.conversion_metric].mean().round(4)
+avg_conversion = analyzer.pretest_data[analyzer.conversion_metric].mean()
 budget = analyzer.budget(analyzer.pretest_data)
-
-# Convert the results to strings
-sample_size_str = str(round(sample_size*(1+analyzer.group_ratio)))
-test_duration_str = str(test_duration)
-start_date_str = str(start_date)
-end_date_str = str(end_date)
-sample_duration_str = str(sample_duration)
-budget_str = str(round(budget,2))
+data_columns=analyzer.pretest_data.columns.values
+data_shape=analyzer.pretest_data.shape
 
 # AA test
 # Check if the data contains 'AA_test'
@@ -164,24 +156,14 @@ if 'AA_test' in analyzer.pretest_data['experiment'].unique():
     AA_start = analyzer.AA_duration(analyzer.pretest_data)[0].strftime('%Y-%m-%d')
     AA_end = analyzer.AA_duration(analyzer.pretest_data)[1].strftime('%Y-%m-%d')
     AA_duration = analyzer.AA_duration(analyzer.pretest_data)[2]
-    AA_control_mean = analyzer.AA_test(analyzer.pretest_data)[1].round(4)
-    AA_treatment_mean = analyzer.AA_test(analyzer.pretest_data)[2].round(4)
+    AA_control_mean = analyzer.AA_test(analyzer.pretest_data)[1]
+    AA_treatment_mean = analyzer.AA_test(analyzer.pretest_data)[2]
     AA_pvalue= analyzer.AA_test(analyzer.pretest_data)[0]
     AA_plot= analyzer.AA_plot(analyzer.pretest_data)
     validate_AA_test = analyzer.validate_AA_test(analyzer.pretest_data)
 
-    # Convert the results to strings
-    AA_start_str = str(AA_start)
-    AA_end_str = str(AA_end)
-    AA_duration_str = str(AA_duration)
-    AA_control_mean_str = str(AA_control_mean)
-    AA_treatment_mean_str = str(AA_treatment_mean)
-    p_value_str = str(round(AA_pvalue,3))
-    validate_AA_test_str = str(validate_AA_test)
 else:
     print("No AA_test data found. Skipping AA test.")
-
-
 
 # Define the directory
 directory = 'output'
@@ -190,44 +172,29 @@ if not os.path.exists(directory):
     os.makedirs(directory)
 
 # Write the results to a file
-
 with open(os.path.join(directory, 'AB_pretest.txt'), 'w') as f:
-    f.write('Sample start date: ' + start_date_str + ', Sample end date: ' + end_date_str + ', duration: '+ sample_duration_str + '\n')
-    f.write('Average conversion: ' + str(avg_conversion) + '\n')
-    f.write('Sample size needed in total: ' + sample_size_str + '\n')
-    f.write('Test duration needed: ' + test_duration_str + '\n')
-    f.write('Budget needed in total: ' + budget_str + '\n')
+    f.write('# AB Test Pretest Results\n')
+    f.write(f'\n## Pretest Parameters:\n')
+    f.write(f'Minimum Detectable Effect: {analyzer.MDE}\n')
+    f.write(f'Significance Level: {analyzer.significance_level}\n')
+    f.write(f'Power: {analyzer.power}\n')
+    f.write(f'\n## Sample Data Preparation:\n')
+    f.write(f'Number of rows: {data_shape[0]}, Number of columns: {data_shape[1]}\n')
+    f.write(f'Data columns: {data_columns}\n')
+    f.write(f'Conversion metric: {analyzer.conversion_metric}\n')
+    f.write(f'Sample start date: {start_date}, Sample end date: {end_date} , duration: {sample_duration} days\n')
+    f.write(f'Average conversion: {avg_conversion:.4f}\n')
+    f.write('\n## Power Analysis, Test Duration and Budget:\n')
+    f.write(f'Sample size needed in total: {sample_size:.0f}\n')
+    f.write(f'Test duration needed: {test_duration} days\n')
+    f.write(f'Budget needed in total: {budget:.2f}\n')
     
     if 'AA_test' in analyzer.pretest_data['experiment'].unique():
-        f.write('AA test start date: ' + AA_start_str + ', AA test end date: ' + AA_end_str + ', duration: '+ AA_duration_str + '\n')
-        f.write('AA control average conversion: ' + AA_control_mean_str + ', AA treatment average conversion: ' + AA_treatment_mean_str + '\n')
-        f.write('AA significance level: ' + str(analyzer.AA_alpha) + ', AA test p-value: ' + p_value_str +'\n')
-        f.write('AA test validation: ' + validate_AA_test_str + '\n')
+        f.write('\n## Pretest Validation - AA Test:\n')
+        f.write(f'AA test start date: {AA_start}, AA test end date: {AA_end}, duration: {AA_duration} days\n')
+        f.write(f'AA control average conversion: {AA_control_mean:.4f}, AA treatment average conversion: {AA_treatment_mean:4f}\n')
+        f.write(f'AA significance level: {analyzer.AA_alpha}, AA test p-value {AA_pvalue:.3f}\n')
+        f.write(f'AA test validation: {validate_AA_test}\n')
         # Save the plot in the directory
         plt.savefig(os.path.join(directory, 'AA_test.png'))
 
-# Create a new Document
-doc = Document()
-# Add the string to the document
-doc.add_heading('AB Test Pretest Results',0)
-doc.add_heading('Sample Data',1)
-doc.add_paragraph('Sample start date: ' + start_date_str + ', Sample end date: ' + end_date_str + ', duration: '+ sample_duration_str)
-doc.add_paragraph('Average conversion: ' + str(avg_conversion))
-doc.add_heading('Power Analysis, Test Duration and Budget',1)
-doc.add_paragraph('Sample size needed in total: ' + sample_size_str)
-doc.add_paragraph('The test duration needed: ' + test_duration_str)
-doc.add_paragraph('Budget needed in total: ' + budget_str)
-if 'AA_test' in analyzer.pretest_data['experiment'].unique():
-    doc.add_heading('Pretest Validation: AA Test',1)
-    doc.add_paragraph('AA test start date: ' + AA_start_str + ', AA test end date: ' + AA_end_str + ', duration: '+ AA_duration_str)
-    doc.add_paragraph('AA control average conversion: ' + AA_control_mean_str + ', AA treatment average conversion: ' + AA_treatment_mean_str)
-    doc.add_paragraph('AA significance level: ' + str(analyzer.AA_alpha) + ', AA test p-value: ' + p_value_str)
-    doc.add_paragraph('AA test validation: ' + validate_AA_test_str)
-    # Save the plot in the directory
-    plot_path = os.path.join(directory, 'AA_test.png')
-    # Add the plot to the document
-    doc.add_picture(plot_path, width=Inches(5.0))
-    # Save the document in the directory
-    doc.save(os.path.join(directory, 'AB_pretest.docx'))
-else:
-    doc.save(os.path.join(directory, 'AB_pretest.docx'))

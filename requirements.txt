@@ -4,5 +4,6 @@ matplotlib
 statsmodels
 math
 os
+scipy
 python-docx
 pyyaml

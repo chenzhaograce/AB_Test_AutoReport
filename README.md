@@ -75,7 +75,7 @@ Here's an example of how your data might look:
 
 ## Contributing 🤝
 
-Contributions, issues, and feature requests are welcome! Feel free to check [issues page](https://github.com/chenzhaograce/AB_Test_AutoReport.git/issues). You can also take a look at the [contributing guide](https://github.com/chenzhaograce/AB_Test_AutoReport/blob/main/CONTRIBUTING.md).
+Contributions, issues, and feature requests are welcome! Feel free to check [issues page](https://github.com/chenzhaograce/AB_Test_AutoReport/issues). You can also take a look at the [contributing guide](https://github.com/chenzhaograce/AB_Test_AutoReport/blob/main/CONTRIBUTING.md).
 
 ## License 📝
 

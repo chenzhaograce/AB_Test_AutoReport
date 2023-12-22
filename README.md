@@ -11,7 +11,7 @@ The class uses a configuration file in YAML format to set various parameters for
 - Install dependencies with `pip3 install -r requirements.txt`
 - Change parameters in configuration file `config.yaml`
 - Run `python3 AB_pretest.py` to run the initial test of AB testing
-- Run `python3 AB_protest.py` to run the after test of AB testing
+- Run `python3 AB_post-test.py` to run the after test of AB testing
 - Check the auto reports of .txt and .png files generated under `/output` folder
 
 ## AB test one-stop automation 🎯

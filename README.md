@@ -45,7 +45,7 @@ Based on the performance, decide wheter or not to use the new version of AB test
 
 - **Report Generation**: The class generates a report of the test results, which is saved as a .txt file in the `/output` folder.
 
-- **Pretest and Posttest Analysis**: The repository includes scripts for both pretest (`AB_pretest.py`) and posttest (`AB_protest.py`) analysis.
+- **Pretest and Posttest Analysis**: The repository includes scripts for both pretest (`AB_pretest.py`) and posttest (`AB_post-test.py`) analysis.
 
 - **Easy Installation**: The repository includes a `requirements.txt` file for easy installation of dependencies.
 

@@ -23,7 +23,12 @@ class ABTestAnalyzer:
         self.pretest_path = config['pretest_path']
         self.conversion_metric = config['conversion_metric']
         self.id_column = config['id_column']
+        self.date_column = config['date_column']
         self.spend_column = config.get('spend_column', None)  # Default to None if 'spend_column' is not found
+        self.group_column = config['group_column']
+        self.control_group = config['control_group']
+        self.treatment_group = config['treatment_group']
+        self.experiment_column = config['experiment_column']
         self.binary = config['binary']
         self.MDE = config['MDE']
         self.significance_level = config['significance_level']
@@ -36,7 +41,7 @@ class ABTestAnalyzer:
     def load_data(self):
         try:
             self.pretest_data = pd.read_csv(self.pretest_path, low_memory=False)
-            self.pretest_data['date'] = pd.to_datetime(self.pretest_data['date'], format='%m/%d/%y')
+            self.pretest_data[self.date_column] = pd.to_datetime(self.pretest_data[self.date_column], format='%m/%d/%y')
         except Exception as e:
             print(f"Error loading data: {e}")
 
@@ -67,7 +72,7 @@ class ABTestAnalyzer:
     def test_duration(self, data):
         try: 
             sample_size = self.calculate_sample_size(data)
-            daily_unique_id = data.groupby('date')[self.id_column].nunique()
+            daily_unique_id = data.groupby(self.date_column)[self.id_column].nunique()
             start_date = daily_unique_id.index.min()
             end_date = daily_unique_id.index.max()
             sample_duration = (end_date - start_date).days + 1
@@ -87,10 +92,10 @@ class ABTestAnalyzer:
         return budget
 
     def AA_duration(self, data):
-        AA_test_data = data[data['experiment'] == self.AA_metric]
+        AA_test_data = data[data[self.experiment_column] == self.AA_metric]
         try:
-            start_date = AA_test_data['date'].min()
-            end_date = AA_test_data['date'].max()
+            start_date = AA_test_data[self.date_column].min()
+            end_date = AA_test_data[self.date_column].max()
             duration = (end_date - start_date).days + 1
             return start_date, end_date, duration
         except Exception as e:
@@ -98,9 +103,9 @@ class ABTestAnalyzer:
             
 
     def AA_test(self, data):
-        AA_test_data = data[data['experiment'] == self.AA_metric]
-        control_group = AA_test_data[AA_test_data['group'] == 0][self.conversion_metric]
-        treatment_group = AA_test_data[AA_test_data['group'] == 1][self.conversion_metric]
+        AA_test_data = data[data[analyzer.experiment_column] == self.AA_metric]
+        control_group = AA_test_data[AA_test_data[self.group_column] == self.control_group][self.conversion_metric]
+        treatment_group = AA_test_data[AA_test_data[self.group_column] == self.treatment_group][self.conversion_metric]
         try: 
             if data[self.conversion_metric].nunique() == 2:
                 _, p_value, _ = proportions_chisquare([control_group.sum(), treatment_group.sum()], nobs=[control_group.count(), treatment_group.count()])
@@ -112,10 +117,10 @@ class ABTestAnalyzer:
             print(f"Error calculating p-value: {e}")
     
     def AA_plot(self, data):
-        AA_test_data = data[data['experiment'] == self.AA_metric]
-        control_group = AA_test_data[AA_test_data['group'] == 0].groupby('date')[self.conversion_metric].mean()
-        treatment_group = AA_test_data[AA_test_data['group'] == 1].groupby('date')[self.conversion_metric].mean()
-        exp_days = range(1, AA_test_data['date'].nunique() + 1)
+        AA_test_data = data[data[analyzer.experiment_column] == self.AA_metric]
+        control_group = AA_test_data[AA_test_data[self.group_column] == self.control_group].groupby(self.date_column)[self.conversion_metric].mean()
+        treatment_group = AA_test_data[AA_test_data[self.group_column] == self.treatment_group].groupby(self.date_column)[self.conversion_metric].mean()
+        exp_days = range(1, AA_test_data[self.date_column].nunique() + 1)
         f, ax = plt.subplots(figsize=(12, 6))
         # plt.style.use('fivethirtyeight') # optional
         ax.plot(exp_days, control_group, label='Control', color='b', marker='o')
@@ -156,7 +161,7 @@ else:
 
 # AA test
 # Check if the data contains 'AA_test'
-if 'AA_test' in analyzer.pretest_data['experiment'].unique():
+if 'AA_test' in analyzer.pretest_data[analyzer.experiment_column].unique():
     AA_start = analyzer.AA_duration(analyzer.pretest_data)[0].strftime('%Y-%m-%d')
     AA_end = analyzer.AA_duration(analyzer.pretest_data)[1].strftime('%Y-%m-%d')
     AA_duration = analyzer.AA_duration(analyzer.pretest_data)[2]
@@ -196,7 +201,7 @@ with open(os.path.join(directory, 'AB_pretest_report.txt'), 'w') as f:
     else:
         pass
     
-    if 'AA_test' in analyzer.pretest_data['experiment'].unique():
+    if 'AA_test' in analyzer.pretest_data[analyzer.experiment_column].unique():
         f.write('\n## Pretest Validation - AA Test:\n')
         f.write(f'AA test start date: {AA_start}, AA test end date: {AA_end}, duration: {AA_duration} days\n')
         f.write(f'AA control average conversion: {AA_control_mean:.4f}, AA treatment average conversion: {AA_treatment_mean:4f}\n')

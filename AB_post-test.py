@@ -24,6 +24,11 @@ class ABTestAnalyzer:
         self.test_path = config['test_path']
         self.conversion_metric = config['conversion_metric']
         self.id_column = config['id_column']
+        self.date_column = config['date_column']
+        self.group_column = config['group_column']
+        self.control_group = config['control_group']
+        self.treatment_group = config['treatment_group']
+        self.experiment_column = config['experiment_column']
         self.spend_column = config['spend_column']
         self.binary = config['binary']
         self.MDE = config['MDE']
@@ -46,8 +51,8 @@ class ABTestAnalyzer:
     # chi-square test
     def chi_square(self, data):
         try:
-            AB_test_data = data[data['experiment'] == self.AB_metric]
-            observed = AB_test_data.groupby('group')['experiment'].count().values
+            AB_test_data = data[data[self.experiment_column] == self.AB_metric]
+            observed = AB_test_data.groupby(self.group_column)[self.experiment_column].count().values
             expected = [AB_test_data.shape[0]*0.5]*2
             
             # perform Chi-Square Goodness of Fit Test
@@ -74,9 +79,9 @@ class ABTestAnalyzer:
     # AB test
     def AB_test(self, data):
         try:
-            AB_test_data = data[data['experiment'] == self.AB_metric]
-            control = AB_test_data[AB_test_data['group'] == 0][self.conversion_metric]
-            treatment = AB_test_data[AB_test_data['group'] == 1][self.conversion_metric]
+            AB_test_data = data[data[self.experiment_column] == self.AB_metric]
+            control = AB_test_data[AB_test_data[self.group_column] == self.control_group][self.conversion_metric]
+            treatment = AB_test_data[AB_test_data[self.group_column] == self.treatment_group][self.conversion_metric]
             # Get stats
             AB_control_sum = control.sum()          # Control Sum
             AB_treatment_sum = treatment.sum()      # Treatment Sum
@@ -129,12 +134,12 @@ class ABTestAnalyzer:
     def novelty_validate(self, data):
         try: 
             # average sales per user per day
-            AB_test_data = data[data['experiment'] == self.AB_metric]
-            AB_per_day = AB_test_data.groupby(['group','date'])[self.conversion_metric].mean()
-            AB_ctrl_conversion = AB_per_day.loc[0]
-            AB_trt_conversion = AB_per_day.loc[1]
+            AB_test_data = data[data[self.experiment_column] == self.AB_metric]
+            AB_per_day = AB_test_data.groupby([self.group_column,self.date_column])[self.conversion_metric].mean()
+            AB_ctrl_conversion = AB_per_day.loc[self.control_group]
+            AB_trt_conversion = AB_per_day.loc[self.treatment_group]
             # Get the day range of experiment
-            exp_days = range(1, AB_test_data['date'].nunique() + 1)
+            exp_days = range(1, AB_test_data[self.date_column].nunique() + 1)
             # Preparing data for regression
             combined_data = pd.DataFrame({
                 'date': AB_ctrl_conversion.index,
@@ -205,9 +210,9 @@ validate_SR = analyzer.chi_square_validate(analyzer.test_data)
 validate_AB = analyzer.AB_validate(analyzer.test_data)
 novelty_pvalue = analyzer.novelty_validate(analyzer.test_data)['pvalue']
 novelty_plot=analyzer.plot_novelty_effect(analyzer.test_data)
-start_date=analyzer.test_data['date'].min().date()
-end_date=analyzer.test_data['date'].max().date()
-sample_duration=(analyzer.test_data['date'].max() - analyzer.test_data['date'].min()).days+1
+start_date=analyzer.test_data[analyzer.date_column].min().date()
+end_date=analyzer.test_data[analyzer.date_column].max().date()
+sample_duration=(end_date-start_date).days+1
 test_data_columns=analyzer.test_data.columns.values
 
 # Define the directory

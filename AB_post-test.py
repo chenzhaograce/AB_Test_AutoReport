@@ -169,8 +169,8 @@ class ABTestAnalyzer:
             stats=self.novelty_validate(data)
             f, ax = plt.subplots(figsize=(12, 6))
             # Generate plots
-            ax.plot(stats['exp_days'], stats['AB_ctrl_conversion'], label='Control', color='b')
-            ax.plot(stats['exp_days'], stats['AB_trt_conversion'], label='Treatment', color='g')
+            ax.plot(stats['exp_days'], stats['AB_ctrl_conversion'], label='Control', color='b', marker='o')
+            ax.plot(stats['exp_days'], stats['AB_trt_conversion'], label='Treatment', color='r', marker='o')
 
             # # Format plot
             ax.set_xticks(stats['exp_days'])
@@ -217,8 +217,8 @@ if not os.path.exists(directory):
     os.makedirs(directory)
 
 # Write the results to a txt file
-with open(os.path.join(directory, 'AB_protest.txt'), 'w') as f:
-    f.write(f'# AB Test Protest Results \n')
+with open(os.path.join(directory, 'AB_post-test.txt'), 'w') as f:
+    f.write(f'# AB Test Post-test Results \n')
     f.write(f'\n## Test Parameters \n')
     f.write(f'Minimum Detectable Effect: {analyzer.MDE}\n')
     f.write(f'AB Test significance Level: {analyzer.AB_alpha}\n')

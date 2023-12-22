@@ -117,8 +117,9 @@ class ABTestAnalyzer:
         treatment_group = AA_test_data[AA_test_data['group'] == 1].groupby('date')[self.conversion_metric].mean()
         exp_days = range(1, AA_test_data['date'].nunique() + 1)
         f, ax = plt.subplots(figsize=(12, 6))
-        ax.plot(exp_days, control_group, label='Control', color='b')
-        ax.plot(exp_days, treatment_group, label='Treatment', color='g')
+        # plt.style.use('fivethirtyeight') # optional
+        ax.plot(exp_days, control_group, label='Control', color='b', marker='o')
+        ax.plot(exp_days, treatment_group, label='Treatment', color='r' ,marker='o')
         ax.set_xticks(exp_days)
         ax.set_title('AA Test')
         ax.set_ylabel('Convert Rate per Day')

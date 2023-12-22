@@ -244,11 +244,9 @@ with open(os.path.join(directory, 'AB_post-test.txt'), 'w') as f:
     else:
         f.write('Novelty Effect Test Validation: Fail to reject H0. There is no novelty effect. In other words, it asserts that any observed changes in the conversion rate (or other metrics of interest) over time are due to random chance rather than a genuine novelty effect. \n')
     f.write(f'\n## AB Test Results \n')
-    f.write(f'AB control size: {AB_control_size}, AB treatment size: {AB_treatment_size}\n')
-    f.write(f'AB control mean: {avg_control_conversion:.4f}, AB treatment mean: {avg_treatment_conversion:.4f}\n')
     f.write(f'H0: There is no difference in conversion between the control and treatment groups.\n')
     f.write(f'H1: There is difference in conversion between the control and treatment groups.\n')
-    f.write(f'AB test significance level: {analyzer.AB_alpha} ,AB test p-value: {AB_pvalue:.3f}\n')
+    f.write(f'AB test significance level: {analyzer.AB_alpha}, AB test p-value: {AB_pvalue:.3f}\n')
     f.write(f'AB test validation: {validate_AB}\n')
     f.write(f'\nAbsolute difference: {absolute_lift:.4f}\n')
     f.write(f'Relative difference: {relative_lift*100:.2f}%\n')

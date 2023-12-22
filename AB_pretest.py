@@ -189,7 +189,7 @@ with open(os.path.join(directory, 'AB_pretest.txt'), 'w') as f:
     f.write(f'Sample start date: {start_date}, Sample end date: {end_date} , duration: {sample_duration} days\n')
     f.write(f'Average conversion: {avg_conversion:.4f}\n')
     f.write('\n## Power Analysis, Test Duration and Budget:\n')
-    f.write(f'Sample size needed in total: {sample_size:.0f}\n')
+    f.write(f'Sample size needed in total: {sample_size*2:.0f}\n')
     f.write(f'Test duration needed: {test_duration} days\n')
     if analyzer.spend_column is not None:
         f.write(f'Budget needed in total: {budget:.2f}\n')

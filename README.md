@@ -6,7 +6,7 @@
 The class uses a configuration file in YAML format to set various parameters for the analysis.
 
 ## Installation 🔌
-- clone the repo `https://github.com/chenzhaograce/AB_test_report_automation.git`
+- clone the repo `https://github.com/chenzhaograce/AB_Test_AutoReport.git`
 - Make sure Python and pip are installed
 - Install dependencies with `pip3 install -r requirements.txt`
 - Change parameters in configuration file `config.yaml`
@@ -60,7 +60,7 @@ Before using the `ABTestAnalyzer` class, you need to prepare your data in the fo
     - **Conversion**: The conversion metric. This can be either binary (1 for a conversion, 0 for no conversion) or continuous (sales, signups, etc.). The type of conversion metric should be specified in the configuration file.
     - **Experiment**: The name of the test.
     - **Group**: The group of the observation (0 for "control", 1 for "treatment").
-    - **Spend**: The spend for the observation, if budget calculation is needed.
+    - **Spend** (Optional): The spend for the observation, if budget calculation is needed.
 - The names of these columns should be specified in the configuration file.
 
 Here's an example of how your data might look:
@@ -75,8 +75,8 @@ Here's an example of how your data might look:
 
 ## Contributing 🤝
 
-Contributions, issues, and feature requests are welcome! Feel free to check [issues page](https://github.com/chenzhaograce/AB_test_report_automation/issues). You can also take a look at the [contributing guide](https://github.com/chenzhaograce/AB_test_report_automation/blob/main/CONTRIBUTING.md).
+Contributions, issues, and feature requests are welcome! Feel free to check [issues page](https://github.com/chenzhaograce/AB_Test_AutoReport.git/issues). You can also take a look at the [contributing guide](https://github.com/chenzhaograce/AB_Test_AutoReport/blob/main/CONTRIBUTING.md).
 
 ## License 📝
 
-This project is [MIT](https://github.com/chenzhaograce/AB_test_report_automation/blob/main/LICENSE) licensed.
+This project is [MIT](https://github.com/chenzhaograce/AB_Test_AutoReport/blob/main/LICENSE) licensed.

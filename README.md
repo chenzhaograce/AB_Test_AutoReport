@@ -59,7 +59,8 @@ The `ABTestAnalyzer` class provides a comprehensive suite of methods for A/B tes
 
 ## Data Preparation 📊
 Before using the `ABTestAnalyzer` class, you need to prepare your data in the following format:
-- The data should be on an ID level, meaning each row corresponds to a unique ID. The ID data should be unique and not duplicated. The data should be in two separate CSV files (If pretest and post-test are in one file, you can also use the same.): one for the pretest data and one for the posttest data.
+- The data should be on an **ID level**, meaning each row corresponds to a unique ID. The ID data should be unique and not duplicated. 
+- The data should be in two separate CSV files (If pretest and post-test are in one file, you can also use the same.): one for the pretest data and one for the posttest data.
 - Each file should include the following columns:
     - **Date**: The date of the observation.
     - **ID**: The ID of the observation (this could be a user_id, impression_id, etc.).

@@ -20,10 +20,9 @@ Start date: 2023-07-01, End date: 2023-07-14, Duration: 14 days
 Observed: [14926 15184], Expected: [15055.0, 15055.0]
 Average control conversion: 0.0953, Average treatment conversion: 0.106691
 
-## Test Type, Normality and Homogeneity Check 
-Test Type: Parametric
+## Normality and Homogeneity Check 
 Normal Distribution: Yes
-Homogeneity: No
+Homogeneity: No (the spread is different across groups)
 
 ## Validity Test - SRM Test (Sample Ratio Mismatch)
 H0: The ratio of samples is 1:1.

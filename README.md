@@ -24,6 +24,8 @@ The `ABTestAnalyzer` class provides a comprehensive suite of methods for A/B tes
 - **Chi-square Test**: The class includes a method for performing a Chi-square test to compare the conversion rates of the two groups.
 - **AA Test**: The class includes a method for performing an AA test to check if the two groups are identical before the actual A/B test.
 ### Post test
+- **Normality Test**: The class includes a method for testing if the data follows a normal distribution.
+- **Homogeneity Test**: The class includes a method for testing if the variances of two or more groups are equal.
 - **SRM Test**: The class includes a method for performing a Sequential Ratio Method (SRM) test to detect any significant changes over time.
 - **Novelty Effect Analysis**: The class includes a method for analyzing the novelty effect, i.e., the initial surge in performance due to the novelty of the new version.
 - **AB Test**: The class includes a method for performing the actual A/B test, comparing the performance of the two versions.

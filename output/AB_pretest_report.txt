@@ -1,5 +1,9 @@
 # AB Test Pretest Report
 
+## Data Quality Check:
+No missing values found.
+No outliers found.
+
 ## Pretest Parameters:
 Minimum Detectable Effect: 0.1
 Significance Level: 0.05

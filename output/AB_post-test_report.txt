@@ -1,5 +1,12 @@
 # AB Test Post-test Report 
 
+## Data Quality Check:
+No missing values found.
+Outliers:
+          date  converted
+3  2023-07-04        992
+10 2023-07-11        992
+
 ## Test Parameters 
 Minimum Detectable Effect: 0.1
 AB Test significance Level: 0.05
@@ -12,6 +19,11 @@ Conversion metric: converted
 Start date: 2023-07-01, End date: 2023-07-14, Duration: 14 days
 Observed: [14926 15184], Expected: [15055.0, 15055.0]
 Average control conversion: 0.0953, Average treatment conversion: 0.106691
+
+## Test Type, Normality and Homogeneity Check 
+Test Type: Parametric
+Normal Distribution: Yes
+Homogeneity: No
 
 ## Validity Test - SRM Test (Sample Ratio Mismatch)
 H0: The ratio of samples is 1:1.

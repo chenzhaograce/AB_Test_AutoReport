@@ -138,7 +138,7 @@ class ABTestAnalyzer:
             avg_daily_unique = daily_unique_id.mean()
             test_duration = sample_size * (1 + self.group_ratio) / avg_daily_unique
             adjusted_test_duration = math.ceil(test_duration / 7) * 7
-            return adjusted_test_duration, start_date, end_date, sample_duration
+            return adjusted_test_duration, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), sample_duration
         except Exception as e:
             self.log.error(f"Error calculating test duration: {e}")
             raise e
@@ -154,36 +154,72 @@ class ABTestAnalyzer:
         except Exception as e:
             self.log.error(f"Error calculating budget: {e}")
             raise e
+    
+    def AA_check(self, data):
+        try:
+            # if experiment_column exists, calculate AA test duration
+            if self.experiment_column in data.columns:
+                AA_test_data = data[data[self.experiment_column] == self.AA_metric]
+                self.log.info("AA test found. Proceeding with AA test.")
+            # if group_column exists, calculate AA test duration
+            elif analyzer.group_column in analyzer.pretest_data.columns:
+                AA_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
+                self.log.info("AA test not specified, but group_column found. Assume group is for AA test. Proceeding with AA test.")
+            else:
+                self.log.info("No AA_test data found. Skipping AA test.")               
+        except Exception as e:
+            self.log.error(f"Error checking AA test: {e}")
+            raise e
 
     def AA_duration(self, data):
-        AA_test_data = data[data[self.experiment_column] == self.AA_metric]
+        # if experiment_column exists, calculate AA test duration
+        if self.experiment_column in data.columns:
+            AA_test_data = data[data[self.experiment_column] == self.AA_metric]
+        elif analyzer.group_column in analyzer.pretest_data.columns:
+            AA_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
+        else:
+            pass
         try:
             start_date = AA_test_data[self.date_column].min()
             end_date = AA_test_data[self.date_column].max()
             duration = (end_date - start_date).days + 1
-            return start_date, end_date, duration
+            return start_date.strftime('%Y-%m-%d') , end_date.strftime('%Y-%m-%d'), duration
         except Exception as e:
             self.log.error(f"Error calculating AA test duration: {e}")
-            raise e          
+            raise e       
 
     def AA_test(self, data):
-        AA_test_data = data[data[analyzer.experiment_column] == self.AA_metric]
-        control_group = AA_test_data[AA_test_data[self.group_column] == self.control_group][self.conversion_metric]
-        treatment_group = AA_test_data[AA_test_data[self.group_column] == self.treatment_group][self.conversion_metric]
+        # if experiment_column exists, calculate AA test duration
+        if self.experiment_column in data.columns:
+            AA_test_data = data[data[self.experiment_column] == self.AA_metric]
+        elif analyzer.group_column in analyzer.pretest_data.columns:
+            AA_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
+        else:
+            pass
+            
         try: 
+            control_group = AA_test_data[AA_test_data[self.group_column] == self.control_group][self.conversion_metric]
+            treatment_group = AA_test_data[AA_test_data[self.group_column] == self.treatment_group][self.conversion_metric]
             if data[self.conversion_metric].nunique() == 2:
                 _, p_value, _ = proportions_chisquare([control_group.sum(), treatment_group.sum()], nobs=[control_group.count(), treatment_group.count()])
             else:
                 _, p_value, _ = ttest_ind(control_group, treatment_group, usevar='unequal')
 
             return p_value, control_group.mean(), treatment_group.mean()
+            
         except Exception as e:
             self.log.error(f"Error calculating AA test: {e}")
             raise e
     
     def AA_plot(self, data):
+        # if experiment_column exists, calculate AA test duration
+        if self.experiment_column in data.columns:
+            AA_test_data = data[data[self.experiment_column] == self.AA_metric]
+        elif analyzer.group_column in analyzer.pretest_data.columns:
+            AA_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
+        else:
+            pass
         try:
-            AA_test_data = data[data[analyzer.experiment_column] == self.AA_metric]
             control_group = AA_test_data[AA_test_data[self.group_column] == self.control_group].groupby(self.date_column)[self.conversion_metric].mean()
             treatment_group = AA_test_data[AA_test_data[self.group_column] == self.treatment_group].groupby(self.date_column)[self.conversion_metric].mean()
             exp_days = range(1, AA_test_data[self.date_column].nunique() + 1)
@@ -215,34 +251,27 @@ class ABTestAnalyzer:
 # Example usage
 analyzer=ABTestAnalyzer()
 analyzer.load_data()
+analyzer.AA_check(analyzer.pretest_data)
 # Call the functions and store the results
 sample_size = analyzer.calculate_sample_size(analyzer.pretest_data)
-test_duration = analyzer.test_duration(analyzer.pretest_data)[0]
-start_date = analyzer.test_duration(analyzer.pretest_data)[1].strftime('%Y-%m-%d')
-end_date = analyzer.test_duration(analyzer.pretest_data)[2].strftime('%Y-%m-%d')
-sample_duration = analyzer.test_duration(analyzer.pretest_data)[3]
+test_duration, start_date, end_date, sample_duration = analyzer.test_duration(analyzer.pretest_data)
 avg_conversion = analyzer.pretest_data[analyzer.conversion_metric].mean()
 data_columns=analyzer.pretest_data.columns.values
 data_shape=analyzer.pretest_data.shape
-if analyzer.spend_column is not None:
+if analyzer.spend_column in analyzer.pretest_data.columns:
     budget = analyzer.budget(analyzer.pretest_data)
 else:
     budget = None  # or some default value
 
 # AA test
-# Check if the data contains 'AA_test'
-if 'AA_test' in analyzer.pretest_data[analyzer.experiment_column].unique():
-    AA_start = analyzer.AA_duration(analyzer.pretest_data)[0].strftime('%Y-%m-%d')
-    AA_end = analyzer.AA_duration(analyzer.pretest_data)[1].strftime('%Y-%m-%d')
-    AA_duration = analyzer.AA_duration(analyzer.pretest_data)[2]
-    AA_control_mean = analyzer.AA_test(analyzer.pretest_data)[1]
-    AA_treatment_mean = analyzer.AA_test(analyzer.pretest_data)[2]
-    AA_pvalue= analyzer.AA_test(analyzer.pretest_data)[0]
+if analyzer.group_column in analyzer.pretest_data.columns:
+    # Common code for both conditions
+    AA_start, AA_end, AA_duration = analyzer.AA_duration(analyzer.pretest_data)
+    AA_pvalue, AA_control_mean, AA_treatment_mean = analyzer.AA_test(analyzer.pretest_data)
     AA_plot= analyzer.AA_plot(analyzer.pretest_data)
     validate_AA_test = analyzer.validate_AA_test(analyzer.pretest_data)
-
 else:
-    print("No AA_test data found. Skipping AA test.")
+    pass
 
 # Define the directory
 directory = 'output'
@@ -276,12 +305,12 @@ with open(os.path.join(directory, 'AB_pretest_report.txt'), 'w') as f:
     f.write('\n## Power Analysis, Test Duration and Budget:\n')
     f.write(f'Sample size needed in total: {sample_size*2:.0f}\n')
     f.write(f'Test duration needed: {test_duration} days\n')
-    if analyzer.spend_column is not None:
+    if analyzer.spend_column in analyzer.pretest_data.columns:
         f.write(f'Budget needed in total: {budget:.2f}\n')
     else:
-        pass
-    
-    if 'AA_test' in analyzer.pretest_data[analyzer.experiment_column].unique():
+        f.write(f'No spend column found. Budget not calculated.\n')   
+    # if group_column exists, write AA test results
+    if analyzer.group_column in analyzer.pretest_data.columns:
         f.write('\n## Pretest Validation - AA Test:\n')
         f.write(f'AA test start date: {AA_start}, AA test end date: {AA_end}, duration: {AA_duration} days\n')
         f.write(f'AA control average conversion: {AA_control_mean:.4f}, AA treatment average conversion: {AA_treatment_mean:4f}\n')
@@ -289,4 +318,5 @@ with open(os.path.join(directory, 'AB_pretest_report.txt'), 'w') as f:
         f.write(f'AA test validation: {validate_AA_test}\n')
         # Save the plot in the directory
         plt.savefig(os.path.join(directory, 'AA_test.png'))
+
 

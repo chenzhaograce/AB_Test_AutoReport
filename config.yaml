@@ -1,19 +1,27 @@
 #file location
-pretest_path: 'data/pretest.csv' #choose last 30 days pretest data
-test_path: 'data/test.csv' 
+pretest_path: 'Mock Dataset/AB Testing Take Home Dataset/pretest.csv' #choose last 30 days pretest data
+test_path: 'Mock Dataset/AB Testing Take Home Dataset/test.csv' 
 
-#metrics and parameters
+# id level data, id is the unique identifier for each row
+# metrics and columns
+### required columns: conversion_metrics, id_column, date_column, group_column, control_group, treatment_group, binary
 conversion_metric: 'converted' #eg. clicks, converted, sales, spend
-id_column: 'impression_id' #eg. impression_id, user_id
-AB_metric: 'landingpage_test' #row name for experiment group
+id_column: 'impression_id' #eg. impression_id, user_id, id is the unique identifier for each row
 date_column: 'date' #eg. date, day, if no date column
-group_column: 'group' #eg. group, if no group column
-experiment_column: 'experiment' #eg. experiment
+group_column: 'group' #eg. group, treatment column names
 control_group: 0 #eg. 0, 1, or 'control', 'treatment'
 treatment_group: 1 #eg. 0, 1, or 'control', 'treatment'
-spend_column: 'spend' #eg. spend, cost, if no spend column, leave it blank
 binary: True #True for proportion, False for mean
 
+### optional columns: AB_metric, AA_metric, experiment_column, spend_column
+AB_metric: 'landingpage_test' #row name for experiment group, if not specified, leave it blank
+AA_metric: 'AA_test' #row name for experiment group, if not specified, leave it blank
+experiment_column: 'experiment' #eg. experiment, experiment_group, if no experiment column, leave it blank
+spend_column: 'spend' #eg. spend, cost, if no spend column, leave it blank
+
+
+#--------------------------------------------------------------Input Parameters--------------------------------------------------------------
+# keep the same as the default if not sure
 # Power Analysis Input Parameters
 MDE : 0.1 #Empirical threshold eg.10% lift or 5% lift
 significance_level : 0.05 #Empirical threshold eg. 5% or 1%
@@ -21,11 +29,12 @@ power : 0.8 #Empirical threshold eg. 80% or 90%
 group_ratio : 1 # 1 for 50/50, 2 for 2/1, 3 for 3/1, etc.
 
 # AA Test Input Parameters
-AA_metric: 'AA_test' #row name for experiment group, if no AA test, leave it blank
 AA_alpha : 0.05 ##Empirical threshold eg. 5% or 1%
 
 # Sample Ratio Mismatch Input Parameters
 SRM_alpha : 0.05 ##Empirical threshold eg. 5% or 1%
+
+# AB Test Input Parameters
 AB_alpha : 0.05 #Empirical threshold eg. 5% or 1%
 
 # Novelty Effect Input Parameters

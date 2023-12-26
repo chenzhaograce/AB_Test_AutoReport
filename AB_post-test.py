@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 from statsmodels.stats.power import tt_ind_solve_power
 from statsmodels.stats.proportion import proportions_chisquare
 from statsmodels.stats.weightstats import ttest_ind
@@ -75,7 +76,7 @@ class ABTestAnalyzer:
     def load_data(self):
         try:
             self.test_data = pd.read_csv(self.test_path, low_memory=False)
-            self.test_data['date'] = pd.to_datetime(self.test_data['date'], format='%m/%d/%y')
+            self.test_data[self.date_column] = pd.to_datetime(self.test_data[self.date_column], format='%m/%d/%y')
         except Exception as e:
             self.log.error(f"Error loading data: {e}")
             raise e
@@ -107,10 +108,32 @@ class ABTestAnalyzer:
             self.log.error(f"Error checking outliers: {e}")
             raise e
     
+    def ab_check(self, data):
+        # if experiment_column exists, calculate AA test duration
+        try: 
+            if self.experiment_column in data.columns:
+                AB_test_data = data[data[self.experiment_column] == self.AB_metric]
+                self.log.info("AB test specified. Proceeding with AB test.")
+            # if group_column exists, calculate AA test duration
+            elif analyzer.group_column in analyzer.pretest_data.columns:
+                AB_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
+                self.log.info("AB test not specified, but group_column found. Assume group is for AB test. Proceeding with AB test.")
+            else:
+                self.log.info("No AB_test data found. Skipping AB test.")
+        except Exception as e:
+            self.log.error(f"Error in ab_check: {e}")
+            raise e
+
     def ab_test_data(self, data):
+        # if experiment_column exists, calculate AA test duration
+        if self.experiment_column in data.columns:
+            AB_test_data = data[data[self.experiment_column] == self.AB_metric]
+        elif analyzer.group_column in analyzer.pretest_data.columns:
+            AB_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
+        else:
+            pass
         try:
             # filter data by date, group and conversion_metric
-            AB_test_data = data[data[self.experiment_column] == self.AB_metric]
             control = AB_test_data[AB_test_data[self.group_column] == self.control_group][self.conversion_metric]
             treatment = AB_test_data[AB_test_data[self.group_column] == self.treatment_group][self.conversion_metric]
             return AB_test_data, control, treatment
@@ -120,8 +143,14 @@ class ABTestAnalyzer:
     
     # chi-square test
     def chi_square(self, data):
-        try:
+        # if experiment_column exists, calculate AA test duration
+        if self.experiment_column in data.columns:
             AB_test_data = data[data[self.experiment_column] == self.AB_metric]
+        elif analyzer.group_column in analyzer.pretest_data.columns:
+            AB_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
+        else:
+            pass
+        try:
             observed = AB_test_data.groupby(self.group_column)[self.experiment_column].count().values
             expected = [AB_test_data.shape[0]*0.5]*2
             
@@ -200,20 +229,21 @@ class ABTestAnalyzer:
         # Check for Homogeneity of Variances
         levene_test = stats.levene(control, treatment)[1] >= alpha
 
+        # Perform the appropriate test
         if normal_dist:
             # Parametric Test
             if levene_test:
                 # Homogeneous variances
                 ttest_pvalue = stats.ttest_ind(control, treatment, equal_var=True)[1]
                 # Calculate the confidence interval for the difference between the means (using equal variances)
-                lb, ub = cm.tconfint_diff(usevar='equal')
+                lb, ub = cm.tconfint_diff(usevar='pooled')
             else:
                 # Heterogeneous variances
                 ttest_pvalue = stats.ttest_ind(control, treatment, equal_var=False)[1]
                 # Calculate the confidence interval for the difference between the means (using unequal variances)
                 lb, ub = cm.tconfint_diff(usevar='unequal')
             test_type = "Parametric"
-            homogeneity = "Yes" if levene_test else "No"
+            homogeneity = "Yes (all groups have similar spread)" if levene_test else "No (the spread is different across groups)"
         else:
             # Non-Parametric Test
             ttest_pvalue = stats.mannwhitneyu(control, treatment)[1]
@@ -255,9 +285,15 @@ class ABTestAnalyzer:
             raise e
  
     def novelty_validate(self, data):
+        # if experiment_column exists, calculate AA test duration
+        if self.experiment_column in data.columns:
+            AB_test_data = data[data[self.experiment_column] == self.AB_metric]
+        elif analyzer.group_column in analyzer.pretest_data.columns:
+            AB_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
+        else:
+            pass
         try: 
             # average sales per user per day
-            AB_test_data = data[data[self.experiment_column] == self.AB_metric]
             AB_per_day = AB_test_data.groupby([self.group_column,self.date_column])[self.conversion_metric].mean()
             AB_ctrl_conversion = AB_per_day.loc[self.control_group]
             AB_trt_conversion = AB_per_day.loc[self.treatment_group]
@@ -316,6 +352,7 @@ class ABTestAnalyzer:
 # Example usage
 analyzer=ABTestAnalyzer()
 analyzer.load_data()
+analyzer.ab_check(analyzer.test_data)
 # Call the functions and store the results
 observed = analyzer.chi_square(analyzer.test_data)['observed']
 expected = analyzer.chi_square(analyzer.test_data)['expected']
@@ -341,7 +378,6 @@ sample_duration=(end_date-start_date).days+1
 test_data_columns=analyzer.test_data.columns.values
 normality=analyzer.AB_test(analyzer.test_data)['Normal Distribution']
 homogeneity=analyzer.AB_test(analyzer.test_data)['Homogeneity']
-test_type=analyzer.AB_test(analyzer.test_data)['Test Type']
 
 # Define the directory
 directory = 'output'
@@ -373,43 +409,43 @@ with open(os.path.join(directory, 'AB_post-test_report.txt'), 'w') as f:
     f.write(f'Start date: {start_date}, End date: {end_date}, Duration: {sample_duration} days\n')
     f.write(f'Observed: {observed}, Expected: {expected}\n')
     f.write(f'Average control conversion: {avg_control_conversion:.4f}, Average treatment conversion: {avg_treatment_conversion:4f}\n')
-    f.write(f'\n## Test Type, Normality and Homogeneity Check \n')
-    f.write(f'Test Type: {test_type}\n')
-    f.write(f'Normal Distribution: {normality}\n')
-    f.write(f'Homogeneity: {homogeneity}\n')
-    f.write(f'\n## Validity Test - SRM Test (Sample Ratio Mismatch)\n')
-    f.write(f'H0: The ratio of samples is 1:1.\n')
-    f.write(f'H1: The ratio of samples is not 1:1.\n')
-    f.write(f'SRM significance level: {analyzer.SRM_alpha}, SRM p-value: {chisquare_pvalue:.3f}\n')
-    f.write(f'SRM validation: {validate_SR}\n')
-    f.write(f'\n## Validity Test - Novelty Effect Test \n')
-    f.write(f'H0: There is no novelty effect.\n')
-    f.write(f'H1: There is novelty effect.\n')
-    f.write(f'Novelty significance level: {analyzer.NE_alpha}, Novelty p-value: {novelty_pvalue:.3f}\n')
-    if novelty_pvalue < analyzer.NE_alpha:
-        f.write('Novelty Effect Test Validation: Reject H0 and conclude that there is novelty effect. There is no novelty effect. It suggests that the observed changes in the conversion rate are statistically significant and can be attributed to the novelty of the treatment (e.g., a new feature or interface).\n')
-    else:
-        f.write('Novelty Effect Test Validation: Fail to reject H0. There is no novelty effect. In other words, it asserts that any observed changes in the conversion rate (or other metrics of interest) over time are due to random chance rather than a genuine novelty effect. \n')
-    f.write(f'\n## AB Test Results \n')
-    f.write(f'H0: There is no difference in conversion between the control and treatment groups.\n')
-    f.write(f'H1: There is difference in conversion between the control and treatment groups.\n')
-    f.write(f'AB test significance level: {analyzer.AB_alpha}, AB test p-value: {AB_pvalue:.3f}\n')
-    f.write(f'AB test validation: {validate_AB}\n')
-    f.write(f'\nAbsolute difference: {absolute_lift:.4f}\n')
-    f.write(f'Relative difference: {relative_lift*100:.2f}%\n')
-    f.write(f'Absolute difference CI: {lower:.4f} to {upper:.4f}\n')
-    f.write(f'Relative difference CI: {lower_lift*100:.2f}% to {upper_lift*100:.2f}%\n')
-    f.write(f'\n## AB Test Conclusion \n')
-    if chisquare_pvalue < analyzer.SRM_alpha:
-        f.write('Reject H0 and conclude that there is statistical significance in the ratio of samples not being 1:1. It indicates a potential issue in the experimental setup, such as a mismatch in the distribution of samples between the control and treatment groups.\n')
-    else:
-        if AB_pvalue < analyzer.AB_alpha:
-            f.write(f'During the test, we noticed a {relative_lift*100:.2f}% boost in performance compared to the control group. This outcome was statistically significant, with a {int(100*(1-analyzer.AB_alpha))}% confidence interval ranging from {lower_lift*100:.2f}% to {upper_lift*100:.2f}%.')
-            if lower_lift < analyzer.MDE:
-                f.write(f'\nHowever, the lower bound of confidence interval {lower_lift*100:.2f}% is smaller than the minimum detectable effect {int(100*analyzer.MDE)}%. Therefore, we cannot conclude that the test is successful. We need to repeat the test with a larger sample size to ascertain whether the new test genuinely results in a {int(100*analyzer.MDE)}% increase.')
-            else:
-                f.write(f'\nThe lower bound of confidence interval {lower_lift*100:.2f}% is greater than the minimum detectable effect {int(100*(1-analyzer.MDE))}%. Therefore, we can conclude that the test is successful. We can roll out the new test to all users.')
+    if analyzer.group_column in analyzer.test_data.columns:
+        f.write(f'\n## Normality and Homogeneity Check \n')
+        f.write(f'Normal Distribution: {normality}\n')
+        f.write(f'Homogeneity: {homogeneity}\n')
+        f.write(f'\n## Validity Test - SRM Test (Sample Ratio Mismatch)\n')
+        f.write(f'H0: The ratio of samples is 1:1.\n')
+        f.write(f'H1: The ratio of samples is not 1:1.\n')
+        f.write(f'SRM significance level: {analyzer.SRM_alpha}, SRM p-value: {chisquare_pvalue:.3f}\n')
+        f.write(f'SRM validation: {validate_SR}\n')
+        f.write(f'\n## Validity Test - Novelty Effect Test \n')
+        f.write(f'H0: There is no novelty effect.\n')
+        f.write(f'H1: There is novelty effect.\n')
+        f.write(f'Novelty significance level: {analyzer.NE_alpha}, Novelty p-value: {novelty_pvalue:.3f}\n')
+        if novelty_pvalue < analyzer.NE_alpha:
+            f.write('Novelty Effect Test Validation: Reject H0 and conclude that there is novelty effect. There is no novelty effect. It suggests that the observed changes in the conversion rate are statistically significant and can be attributed to the novelty of the treatment (e.g., a new feature or interface).\n')
         else:
-            f.write(f'The test did not result in a statistically significant difference in performance compared to the control group. Therefore, we cannot conclude that the test is successful. We need to repeat the test with a larger sample size to ascertain whether the new test genuinely results in a {int(100*analyzer.MDE)}% increase.')
-    #Save the plot in the directory
-    plt.savefig(os.path.join(directory, 'AB_test.png'))
+            f.write('Novelty Effect Test Validation: Fail to reject H0. There is no novelty effect. In other words, it asserts that any observed changes in the conversion rate (or other metrics of interest) over time are due to random chance rather than a genuine novelty effect. \n')
+        f.write(f'\n## AB Test Results \n')
+        f.write(f'H0: There is no difference in conversion between the control and treatment groups.\n')
+        f.write(f'H1: There is difference in conversion between the control and treatment groups.\n')
+        f.write(f'AB test significance level: {analyzer.AB_alpha}, AB test p-value: {AB_pvalue:.3f}\n')
+        f.write(f'AB test validation: {validate_AB}\n')
+        f.write(f'\nAbsolute difference: {absolute_lift:.4f}\n')
+        f.write(f'Relative difference: {relative_lift*100:.2f}%\n')
+        f.write(f'Absolute difference CI: {lower:.4f} to {upper:.4f}\n')
+        f.write(f'Relative difference CI: {lower_lift*100:.2f}% to {upper_lift*100:.2f}%\n')
+        f.write(f'\n## AB Test Conclusion \n')
+        if chisquare_pvalue < analyzer.SRM_alpha:
+            f.write('Reject H0 and conclude that there is statistical significance in the ratio of samples not being 1:1. It indicates a potential issue in the experimental setup, such as a mismatch in the distribution of samples between the control and treatment groups.\n')
+        else:
+            if AB_pvalue < analyzer.AB_alpha:
+                f.write(f'During the test, we noticed a {relative_lift*100:.2f}% boost in performance compared to the control group. This outcome was statistically significant, with a {int(100*(1-analyzer.AB_alpha))}% confidence interval ranging from {lower_lift*100:.2f}% to {upper_lift*100:.2f}%.')
+                if lower_lift < analyzer.MDE:
+                    f.write(f'\nHowever, the lower bound of confidence interval {lower_lift*100:.2f}% is smaller than the minimum detectable effect {int(100*analyzer.MDE)}%. Therefore, we cannot conclude that the test is successful. We need to repeat the test with a larger sample size to ascertain whether the new test genuinely results in a {int(100*analyzer.MDE)}% increase.')
+                else:
+                    f.write(f'\nThe lower bound of confidence interval {lower_lift*100:.2f}% is greater than the minimum detectable effect {int(100*analyzer.MDE)}%. Therefore, we can conclude that the test is successful. We can roll out the new test to all users.')
+            else:
+                f.write(f'The test did not result in a statistically significant difference in performance compared to the control group. Therefore, we cannot conclude that the test is successful. We need to repeat the test with a larger sample size to ascertain whether the new test genuinely results in a {int(100*analyzer.MDE)}% increase.')
+        #Save the plot in the directory
+        plt.savefig(os.path.join(directory, 'AB_test.png'))

@@ -115,7 +115,7 @@ class ABTestAnalyzer:
                 AB_test_data = data[data[self.experiment_column] == self.AB_metric]
                 self.log.info("AB test specified. Proceeding with AB test.")
             # if group_column exists, calculate AA test duration
-            elif analyzer.group_column in analyzer.pretest_data.columns:
+            elif analyzer.group_column in data.columns:
                 AB_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
                 self.log.info("AB test not specified, but group_column found. Assume group is for AB test. Proceeding with AB test.")
             else:
@@ -128,7 +128,7 @@ class ABTestAnalyzer:
         # if experiment_column exists, calculate AA test duration
         if self.experiment_column in data.columns:
             AB_test_data = data[data[self.experiment_column] == self.AB_metric]
-        elif analyzer.group_column in analyzer.pretest_data.columns:
+        elif analyzer.group_column in data.columns:
             AB_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
         else:
             pass
@@ -146,12 +146,12 @@ class ABTestAnalyzer:
         # if experiment_column exists, calculate AA test duration
         if self.experiment_column in data.columns:
             AB_test_data = data[data[self.experiment_column] == self.AB_metric]
-        elif analyzer.group_column in analyzer.pretest_data.columns:
+        elif analyzer.group_column in data.columns:
             AB_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
         else:
             pass
         try:
-            observed = AB_test_data.groupby(self.group_column)[self.experiment_column].count().values
+            observed = AB_test_data.groupby(self.group_column)[self.id_column].count().values
             expected = [AB_test_data.shape[0]*0.5]*2
             
             # perform Chi-Square Goodness of Fit Test
@@ -288,7 +288,7 @@ class ABTestAnalyzer:
         # if experiment_column exists, calculate AA test duration
         if self.experiment_column in data.columns:
             AB_test_data = data[data[self.experiment_column] == self.AB_metric]
-        elif analyzer.group_column in analyzer.pretest_data.columns:
+        elif analyzer.group_column in data.columns:
             AB_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
         else:
             pass

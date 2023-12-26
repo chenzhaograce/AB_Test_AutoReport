@@ -160,9 +160,9 @@ class ABTestAnalyzer:
             # if experiment_column exists, calculate AA test duration
             if self.experiment_column in data.columns:
                 AA_test_data = data[data[self.experiment_column] == self.AA_metric]
-                self.log.info("AA test found. Proceeding with AA test.")
+                self.log.info("AA test specified. Proceeding with AA test.")
             # if group_column exists, calculate AA test duration
-            elif analyzer.group_column in analyzer.pretest_data.columns:
+            elif analyzer.group_column in data.columns:
                 AA_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
                 self.log.info("AA test not specified, but group_column found. Assume group is for AA test. Proceeding with AA test.")
             else:
@@ -175,7 +175,7 @@ class ABTestAnalyzer:
         # if experiment_column exists, calculate AA test duration
         if self.experiment_column in data.columns:
             AA_test_data = data[data[self.experiment_column] == self.AA_metric]
-        elif analyzer.group_column in analyzer.pretest_data.columns:
+        elif analyzer.group_column in data.columns:
             AA_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
         else:
             pass
@@ -192,7 +192,7 @@ class ABTestAnalyzer:
         # if experiment_column exists, calculate AA test duration
         if self.experiment_column in data.columns:
             AA_test_data = data[data[self.experiment_column] == self.AA_metric]
-        elif analyzer.group_column in analyzer.pretest_data.columns:
+        elif analyzer.group_column in data.columns:
             AA_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
         else:
             pass
@@ -215,7 +215,7 @@ class ABTestAnalyzer:
         # if experiment_column exists, calculate AA test duration
         if self.experiment_column in data.columns:
             AA_test_data = data[data[self.experiment_column] == self.AA_metric]
-        elif analyzer.group_column in analyzer.pretest_data.columns:
+        elif analyzer.group_column in data.columns:
             AA_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
         else:
             pass

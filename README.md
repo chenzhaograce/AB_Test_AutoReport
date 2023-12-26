@@ -5,6 +5,18 @@
 `ABTestAnalyzer` is a Python class for performing A/B testing analysis. The class includes methods for sample size calculation, test duration calculation, calculating effect size, performing AA test, AB test, Novelty effect test, Chi-square tests, and more.  
 The class uses a configuration file in YAML format to set various parameters for the analysis.
 
+## Navigating the Project 🗺️
+
+To navigate to the project directory after cloning the repository, you can use the `cd` command in your terminal. Here's how you can do it:
+
+1. Open your terminal.
+2. Use the `cd` command followed by the path of your directory to navigate to the project. For example:
+```bash
+cd path/to/your/directory/AB_Test_AutoReport
+```
+3. If you want to know your current directory location, you can use the pwd (Print Working Directory) command:
+```pwd```
+
 ## Installation 🔌
 - clone the repo `https://github.com/chenzhaograce/AB_Test_AutoReport.git`
 - Make sure Python and pip are installed

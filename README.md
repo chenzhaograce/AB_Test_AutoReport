@@ -1,8 +1,7 @@
 # AB Test AutoReport 🤖
 
 ## Description 🧩
-
-`ABTestAnalyzer` is a Python class for performing A/B testing analysis. The class includes methods for sample size calculation, test duration calculation, calculating effect size, performing AA test, AB test, Novelty effect test, Chi-square tests, and more.  
+`ABTestAnalyzer` is a Python class for performing A/B testing analysis. The class includes methods for sample size calculation, test duration calculation, calculating effect size, performing AA test, AB test, Normality check, Homogenity check, Novelty effect test, Chi-square tests, and more.  
 The class uses a configuration file in YAML format to set various parameters for the analysis.
 
 ## Navigating the Project 🗺️
@@ -50,23 +49,15 @@ Based on the performance, decide wheter or not to use the new version of AB test
 
 ## Features 🏵️
 - **Automated Analysis**: The `ABTestAnalyzer` class automates the process of performing A/B testing analysis. Just run the scripts and get your results.
-
 - **Configurable**: The class uses a configuration file in YAML format, allowing you to easily adjust various parameters for the analysis.
-
 - **Comprehensive**: The class includes methods for sample size calculation, test duration calculation, calculating effect size, performing AA test, AB test, Novelty effect test, Chi-square tests, and more.
-
 - **Visualizations**: The class generates visualizations of the test results, which are saved as .png files in the `/output` folder.
-
 - **Report Generation**: The class generates a report of the test results, which is saved as a .txt file in the `/output` folder.
-
 - **Pretest and Posttest Analysis**: The repository includes scripts for both pretest (`AB_pretest.py`) and posttest (`AB_post-test.py`) analysis.
-
 - **Easy Installation**: The repository includes a `requirements.txt` file for easy installation of dependencies.
 
 ## Data Preparation 📊
-
 Before using the `ABTestAnalyzer` class, you need to prepare your data in the following format:
-
 - The data should be in two separate CSV files (If pretest and post-test in one file, you can also use the same.): one for the pretest data and one for the posttest data.
 - Each file should include the following columns:
     - **Date**: The date of the observation.
@@ -88,9 +79,7 @@ Here's an example of how your data might look:
 | ...        | ... | ...        | ...        | ...   | ...   |
 
 ## Contributing 🤝
-
 Contributions, issues, and feature requests are welcome! Feel free to check [issues page](https://github.com/chenzhaograce/AB_Test_AutoReport/issues). You can also take a look at the [contributing guide](https://github.com/chenzhaograce/AB_Test_AutoReport/blob/main/CONTRIBUTING.md).
 
 ## License 📝
-
 This project is [MIT](https://github.com/chenzhaograce/AB_Test_AutoReport/blob/main/LICENSE) licensed.

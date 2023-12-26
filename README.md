@@ -5,9 +5,7 @@
 The class uses a configuration file in YAML format to set various parameters for the analysis.
 
 ## Navigating the Project 🗺️
-
 To navigate to the project directory after cloning the repository, you can use the `cd` command in your terminal. Here's how you can do it:
-
 1. Open your terminal.
 2. Use the `cd` command followed by the path of your directory to navigate to the project. For example:
 ```bash
@@ -24,10 +22,13 @@ cd path/to/your/directory/AB_Test_AutoReport
 - Run `python3 AB_pretest.py` to run the initial test of AB testing
 - Run `python3 AB_post-test.py` to run the after test of AB testing
 - Check the auto reports of .txt and .png files generated under `/output` folder
+- Check the logs under `/logs` folder
 
 ## AB test one-stop automation 🎯
 The `ABTestAnalyzer` class provides a comprehensive suite of methods for A/B testing analysis:
 ### Pretest
+- **Missing Value Check**: The class includes a method for checking missing values in the dataset. It will provide a report of the number and percentage of missing values in each column.
+- **Outliers Check**: The class includes a method for detecting outliers in the dataset. It uses the IQR method to detect outliers and provides a report of the number and percentage of outliers in each column.
 - **Data Loading and Effect Size Calculation**: The class includes methods for loading data and calculating effect size.
 - **Sample Size Calculation**: The class includes a method for calculating the required sample size based on the desired power and significance level.
 - **Test Duration Calculation**: The class includes a method for calculating the required test duration based on the desired sample size and the expected traffic. 
@@ -44,7 +45,7 @@ The `ABTestAnalyzer` class provides a comprehensive suite of methods for A/B tes
 - **Absolute Lift Calculation**: The class includes a method for calculating the absolute lift, i.e., the absolute difference in performance between the two versions.
 - **Relative Lift Calculation**: The class includes a method for calculating the relative lift, i.e., the percentage increase in performance of the new version compared to the old version.
 ### Generate conclusion
-Based on the performance, decide wheter or not to use the new version of AB test.
+- Based on the performance, decide wheter or not to use the new version of AB test.
 
 
 ## Features 🏵️
@@ -58,14 +59,15 @@ Based on the performance, decide wheter or not to use the new version of AB test
 
 ## Data Preparation 📊
 Before using the `ABTestAnalyzer` class, you need to prepare your data in the following format:
-- The data should be in two separate CSV files (If pretest and post-test in one file, you can also use the same.): one for the pretest data and one for the posttest data.
+- The data should be on an ID level, meaning each row corresponds to a unique ID. The ID data should be unique and not duplicated. The data should be in two separate CSV files (If pretest and post-test are in one file, you can also use the same.): one for the pretest data and one for the posttest data.
 - Each file should include the following columns:
     - **Date**: The date of the observation.
     - **ID**: The ID of the observation (this could be a user_id, impression_id, etc.).
     - **Conversion**: The conversion metric. This can be either binary (1 for a conversion, 0 for no conversion) or continuous (sales, signups, etc.). The type of conversion metric should be specified in the configuration file.
-    - **Experiment**: The name of the test.
+    - **Experiment**: The name of the test ('ab_test','AA_test','landingpage_test', etc.).
     - **Group**: The group of the observation (0 for "control", 1 for "treatment").
     - **Spend** (Optional): The spend for the observation, if budget calculation is needed.
+    - etc.
 - The names of these columns should be specified in the configuration file.
 
 Here's an example of how your data might look:

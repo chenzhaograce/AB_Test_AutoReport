@@ -10,3 +10,4 @@ scikit-learn>=0.22.0
 streamlit>=1.30.0
 openai>=1.0.0
 plotly>=5.0.0
+google-genai>=1.0.0

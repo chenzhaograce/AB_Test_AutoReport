@@ -17,6 +17,28 @@ try:
 except ImportError:
     OPENAI_AVAILABLE = False
 
+try:
+    from google import genai
+    from google.genai import types as genai_types
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+
+LLM_PROVIDERS = {
+    "Gemini (Google)": {
+        "models": ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-pro"],
+        "help": "Free tier available. Get a key at https://aistudio.google.com/apikey",
+        "available": GEMINI_AVAILABLE,
+        "package": "google-genai",
+    },
+    "OpenAI": {
+        "models": ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"],
+        "help": "Get a key at https://platform.openai.com/api-keys",
+        "available": OPENAI_AVAILABLE,
+        "package": "openai",
+    },
+}
+
 # ─── Page Config ─────────────────────────────────────────────────────────────
 
 st.set_page_config(
@@ -356,7 +378,7 @@ def run_novelty_test(data, group_col, ctrl_val, trt_val, date_col, metric_col):
 
 # ─── LLM Helper ─────────────────────────────────────────────────────────────
 
-def stream_llm(api_key, context, model="gpt-4o-mini"):
+def stream_openai(api_key, context, model="gpt-4o-mini"):
     client = OpenAI(api_key=api_key)
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -371,16 +393,37 @@ def stream_llm(api_key, context, model="gpt-4o-mini"):
             yield content
 
 
-def render_llm_explanation(api_key, context, model, header="AI Interpretation"):
+def stream_gemini(api_key, context, model="gemini-2.0-flash"):
+    client = genai.Client(api_key=api_key)
+    response = client.models.generate_content_stream(
+        model=model,
+        contents=context,
+        config=genai_types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+        ),
+    )
+    for chunk in response:
+        if chunk.text:
+            yield chunk.text
+
+
+def render_llm_explanation(api_key, provider, context, model, header="AI Interpretation"):
     st.markdown(f"### 🤖 {header}")
     if not api_key:
-        st.info("Enter your OpenAI API key in the sidebar to get AI-powered explanations.")
+        st.info("Enter your API key in the sidebar to get AI-powered explanations.")
         return
-    if not OPENAI_AVAILABLE:
-        st.warning("Install the `openai` package to enable AI explanations: `pip install openai`")
+
+    provider_info = LLM_PROVIDERS[provider]
+    if not provider_info["available"]:
+        st.warning(f"Install `{provider_info['package']}` to use {provider}: "
+                    f"`pip install {provider_info['package']}`")
         return
+
     try:
-        st.write_stream(stream_llm(api_key, context, model))
+        if provider == "OpenAI":
+            st.write_stream(stream_openai(api_key, context, model))
+        elif provider == "Gemini (Google)":
+            st.write_stream(stream_gemini(api_key, context, model))
     except Exception as e:
         st.error(f"LLM Error: {e}")
 
@@ -401,14 +444,19 @@ with st.sidebar:
     st.title("⚙️ Configuration")
 
     st.subheader("LLM Settings")
+    llm_provider = st.selectbox(
+        "Provider",
+        list(LLM_PROVIDERS.keys()),
+        index=0,
+        help="Gemini offers a free tier; OpenAI requires a paid key",
+    )
+    provider_info = LLM_PROVIDERS[llm_provider]
     api_key = st.text_input(
-        "OpenAI API Key",
+        f"{llm_provider} API Key",
         type="password",
-        help="Required for AI-powered explanations of results",
+        help=provider_info["help"],
     )
-    llm_model = st.selectbox(
-        "Model", ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"], index=0
-    )
+    llm_model = st.selectbox("Model", provider_info["models"], index=0)
 
     st.divider()
     st.subheader("Test Parameters")
@@ -674,7 +722,7 @@ with tab_pre:
 """
 
                 context += "\nPlease provide a complete interpretation and recommendations for running this A/B test."
-                render_llm_explanation(api_key, context, llm_model, header="Pre-test Interpretation")
+                render_llm_explanation(api_key, llm_provider, context, llm_model, header="Pre-test Interpretation")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -951,13 +999,13 @@ with tab_post:
 Please provide a thorough interpretation of these results, explain the statistical reasoning, \
 and give a clear recommendation on whether to ship the treatment, extend the test, or revert."""
 
-                render_llm_explanation(api_key, context_post, llm_model, header="Post-test Interpretation")
+                render_llm_explanation(api_key, llm_provider, context_post, llm_model, header="Post-test Interpretation")
 
 # ─── Footer ──────────────────────────────────────────────────────────────────
 
 st.divider()
 st.caption(
     "AB Test Analyzer • Statistical analysis powered by scipy & statsmodels • "
-    "AI explanations powered by OpenAI • "
+    "AI explanations powered by Gemini / OpenAI • "
     "[GitHub](https://github.com/chenzhaograce/AB_Test_AutoReport)"
 )

@@ -162,7 +162,7 @@ class ABTestAnalyzer:
                 AA_test_data = data[data[self.experiment_column] == self.AA_metric]
                 self.log.info("AA test specified. Proceeding with AA test.")
             # if group_column exists, calculate AA test duration
-            elif analyzer.group_column in data.columns:
+            elif self.group_column in data.columns:
                 AA_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
                 self.log.info("AA test not specified, but group_column found. Assume group is for AA test. Proceeding with AA test.")
             else:
@@ -171,32 +171,34 @@ class ABTestAnalyzer:
             self.log.error(f"Error checking AA test: {e}")
             raise e
 
-    def AA_duration(self, data):
-        # if experiment_column exists, calculate AA test duration
+    def _get_aa_test_data(self, data):
+        """Extract AA test data based on available columns."""
         if self.experiment_column in data.columns:
-            AA_test_data = data[data[self.experiment_column] == self.AA_metric]
-        elif analyzer.group_column in data.columns:
-            AA_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
+            return data[data[self.experiment_column] == self.AA_metric]
+        elif self.group_column in data.columns:
+            return data[data[self.group_column].isin([self.control_group, self.treatment_group])]
         else:
-            pass
+            return None
+
+    def AA_duration(self, data):
+        AA_test_data = self._get_aa_test_data(data)
+        if AA_test_data is None:
+            self.log.warning("No AA test data available.")
+            return None, None, None
         try:
             start_date = AA_test_data[self.date_column].min()
             end_date = AA_test_data[self.date_column].max()
             duration = (end_date - start_date).days + 1
-            return start_date.strftime('%Y-%m-%d') , end_date.strftime('%Y-%m-%d'), duration
+            return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), duration
         except Exception as e:
             self.log.error(f"Error calculating AA test duration: {e}")
             raise e       
 
     def AA_test(self, data):
-        # if experiment_column exists, calculate AA test duration
-        if self.experiment_column in data.columns:
-            AA_test_data = data[data[self.experiment_column] == self.AA_metric]
-        elif analyzer.group_column in data.columns:
-            AA_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
-        else:
-            pass
-            
+        AA_test_data = self._get_aa_test_data(data)
+        if AA_test_data is None:
+            self.log.warning("No AA test data available.")
+            return None, None, None
         try: 
             control_group = AA_test_data[AA_test_data[self.group_column] == self.control_group][self.conversion_metric]
             treatment_group = AA_test_data[AA_test_data[self.group_column] == self.treatment_group][self.conversion_metric]
@@ -212,13 +214,10 @@ class ABTestAnalyzer:
             raise e
     
     def AA_plot(self, data):
-        # if experiment_column exists, calculate AA test duration
-        if self.experiment_column in data.columns:
-            AA_test_data = data[data[self.experiment_column] == self.AA_metric]
-        elif analyzer.group_column in data.columns:
-            AA_test_data = data[data[self.group_column].isin([self.control_group, self.treatment_group])]
-        else:
-            pass
+        AA_test_data = self._get_aa_test_data(data)
+        if AA_test_data is None:
+            self.log.warning("No AA test data available for plotting.")
+            return None
         try:
             control_group = AA_test_data[AA_test_data[self.group_column] == self.control_group].groupby(self.date_column)[self.conversion_metric].mean()
             treatment_group = AA_test_data[AA_test_data[self.group_column] == self.treatment_group].groupby(self.date_column)[self.conversion_metric].mean()
@@ -248,75 +247,67 @@ class ABTestAnalyzer:
             self.log.error(f"Error validating AA test: {e}")
             raise e
 
-# Example usage
-analyzer=ABTestAnalyzer()
-analyzer.load_data()
-analyzer.AA_check(analyzer.pretest_data)
-# Call the functions and store the results
-sample_size = analyzer.calculate_sample_size(analyzer.pretest_data)
-test_duration, start_date, end_date, sample_duration = analyzer.test_duration(analyzer.pretest_data)
-avg_conversion = analyzer.pretest_data[analyzer.conversion_metric].mean()
-data_columns=analyzer.pretest_data.columns.values
-data_shape=analyzer.pretest_data.shape
-if analyzer.spend_column in analyzer.pretest_data.columns:
-    budget = analyzer.budget(analyzer.pretest_data)
-else:
-    budget = None  # or some default value
+if __name__ == '__main__':
+    analyzer = ABTestAnalyzer()
+    analyzer.load_data()
+    analyzer.AA_check(analyzer.pretest_data)
 
-# AA test
-if analyzer.group_column in analyzer.pretest_data.columns:
-    # Common code for both conditions
-    AA_start, AA_end, AA_duration = analyzer.AA_duration(analyzer.pretest_data)
-    AA_pvalue, AA_control_mean, AA_treatment_mean = analyzer.AA_test(analyzer.pretest_data)
-    AA_plot= analyzer.AA_plot(analyzer.pretest_data)
-    validate_AA_test = analyzer.validate_AA_test(analyzer.pretest_data)
-else:
-    pass
+    sample_size = analyzer.calculate_sample_size(analyzer.pretest_data)
+    test_duration, start_date, end_date, sample_duration = analyzer.test_duration(analyzer.pretest_data)
+    avg_conversion = analyzer.pretest_data[analyzer.conversion_metric].mean()
+    data_columns = analyzer.pretest_data.columns.values
+    data_shape = analyzer.pretest_data.shape
 
-# Define the directory
-directory = 'output'
-# Create the directory if it doesn't exist
-if not os.path.exists(directory):
-    os.makedirs(directory)
+    if analyzer.spend_column and analyzer.spend_column in analyzer.pretest_data.columns:
+        budget = analyzer.budget(analyzer.pretest_data)
+    else:
+        budget = None
 
-# Write the results to a file
-with open(os.path.join(directory, 'AB_pretest_report.txt'), 'w') as f:
-    analyzer.log.info(f"Writing results to {os.path.join(directory, 'AB_pretest_report.txt')}")
-    f.write('# AB Test Pretest Report\n')
-    f.write(f'\n## Data Quality Check:\n')
-    if analyzer.check_missing(analyzer.pretest_data).empty:
-        f.write('No missing values found.\n')
-    else:
-        f.write(f'Missing values: {analyzer.check_missing(analyzer.pretest_data)}\n')
-    if analyzer.check_outliers(analyzer.pretest_data).empty:
-        f.write('No outliers found.\n')
-    else:
-        f.write(f'Outliers: {analyzer.check_outliers(analyzer.pretest_data)}\n')
-    f.write(f'\n## Pretest Parameters:\n')
-    f.write(f'Minimum Detectable Effect: {analyzer.MDE}\n')
-    f.write(f'Significance Level: {analyzer.significance_level}\n')
-    f.write(f'Power: {analyzer.power}\n')
-    f.write(f'\n## Sample Data Preparation:\n')
-    f.write(f'Number of rows: {data_shape[0]}, Number of columns: {data_shape[1]}\n')
-    f.write(f'Data columns: {data_columns}\n')
-    f.write(f'Conversion metric: {analyzer.conversion_metric}\n')
-    f.write(f'Sample start date: {start_date}, Sample end date: {end_date} , duration: {sample_duration} days\n')
-    f.write(f'Average conversion: {avg_conversion:.4f}\n')
-    f.write('\n## Power Analysis, Test Duration and Budget:\n')
-    f.write(f'Sample size needed in total: {sample_size*2:.0f}\n')
-    f.write(f'Test duration needed: {test_duration} days\n')
-    if analyzer.spend_column in analyzer.pretest_data.columns:
-        f.write(f'Budget needed in total: {budget:.2f}\n')
-    else:
-        f.write(f'No spend column found. Budget not calculated.\n')   
-    # if group_column exists, write AA test results
     if analyzer.group_column in analyzer.pretest_data.columns:
-        f.write('\n## Pretest Validation - AA Test:\n')
-        f.write(f'AA test start date: {AA_start}, AA test end date: {AA_end}, duration: {AA_duration} days\n')
-        f.write(f'AA control average conversion: {AA_control_mean:.4f}, AA treatment average conversion: {AA_treatment_mean:4f}\n')
-        f.write(f'AA significance level: {analyzer.AA_alpha}, AA test p-value {AA_pvalue:.3f}\n')
-        f.write(f'AA test validation: {validate_AA_test}\n')
-        # Save the plot in the directory
-        plt.savefig(os.path.join(directory, 'AA_test.png'))
+        AA_start, AA_end, AA_duration = analyzer.AA_duration(analyzer.pretest_data)
+        AA_pvalue, AA_control_mean, AA_treatment_mean = analyzer.AA_test(analyzer.pretest_data)
+        AA_plot = analyzer.AA_plot(analyzer.pretest_data)
+        validate_AA_test = analyzer.validate_AA_test(analyzer.pretest_data)
+
+    directory = 'output'
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    with open(os.path.join(directory, 'AB_pretest_report.txt'), 'w') as f:
+        analyzer.log.info(f"Writing results to {os.path.join(directory, 'AB_pretest_report.txt')}")
+        f.write('# AB Test Pretest Report\n')
+        f.write(f'\n## Data Quality Check:\n')
+        if analyzer.check_missing(analyzer.pretest_data).empty:
+            f.write('No missing values found.\n')
+        else:
+            f.write(f'Missing values: {analyzer.check_missing(analyzer.pretest_data)}\n')
+        if analyzer.check_outliers(analyzer.pretest_data).empty:
+            f.write('No outliers found.\n')
+        else:
+            f.write(f'Outliers: {analyzer.check_outliers(analyzer.pretest_data)}\n')
+        f.write(f'\n## Pretest Parameters:\n')
+        f.write(f'Minimum Detectable Effect: {analyzer.MDE}\n')
+        f.write(f'Significance Level: {analyzer.significance_level}\n')
+        f.write(f'Power: {analyzer.power}\n')
+        f.write(f'\n## Sample Data Preparation:\n')
+        f.write(f'Number of rows: {data_shape[0]}, Number of columns: {data_shape[1]}\n')
+        f.write(f'Data columns: {data_columns}\n')
+        f.write(f'Conversion metric: {analyzer.conversion_metric}\n')
+        f.write(f'Sample start date: {start_date}, Sample end date: {end_date} , duration: {sample_duration} days\n')
+        f.write(f'Average conversion: {avg_conversion:.4f}\n')
+        f.write('\n## Power Analysis, Test Duration and Budget:\n')
+        f.write(f'Sample size needed in total: {sample_size*2:.0f}\n')
+        f.write(f'Test duration needed: {test_duration} days\n')
+        if analyzer.spend_column and analyzer.spend_column in analyzer.pretest_data.columns:
+            f.write(f'Budget needed in total: {budget:.2f}\n')
+        else:
+            f.write(f'No spend column found. Budget not calculated.\n')
+        if analyzer.group_column in analyzer.pretest_data.columns:
+            f.write('\n## Pretest Validation - AA Test:\n')
+            f.write(f'AA test start date: {AA_start}, AA test end date: {AA_end}, duration: {AA_duration} days\n')
+            f.write(f'AA control average conversion: {AA_control_mean:.4f}, AA treatment average conversion: {AA_treatment_mean:.4f}\n')
+            f.write(f'AA significance level: {analyzer.AA_alpha}, AA test p-value {AA_pvalue:.3f}\n')
+            f.write(f'AA test validation: {validate_AA_test}\n')
+            plt.savefig(os.path.join(directory, 'AA_test.png'))
 
 

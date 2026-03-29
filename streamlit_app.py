@@ -26,7 +26,7 @@ except ImportError:
 
 LLM_PROVIDERS = {
     "Gemini (Google)": {
-        "models": ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-pro"],
+        "models": ["gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-pro"],
         "help": "Free tier available. Get a key at https://aistudio.google.com/apikey",
         "available": GEMINI_AVAILABLE,
         "package": "google-genai",

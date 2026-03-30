@@ -471,11 +471,13 @@ with st.sidebar:
         "Significance Level (α)",
         min_value=0.01, max_value=0.20, value=0.05, step=0.01,
         format="%.2f",
+        help="Probability of a false positive (Type I error). 0.05 means a 5% chance of concluding there's an effect when there isn't one.",
     )
     power_val = st.number_input(
         "Statistical Power (1 − β)",
         min_value=0.50, max_value=0.99, value=0.80, step=0.05,
         format="%.2f",
+        help="Probability of detecting a real effect. 0.80 means an 80% chance of catching a true difference. Higher power requires larger samples.",
     )
     group_ratio = st.number_input(
         "Group Ratio (treatment / control)",
@@ -517,28 +519,37 @@ with tab_pre:
                 pre_id = st.selectbox(
                     "ID Column", cols, key="pre_id",
                     index=find_best_index(cols, ["impression_id", "user_id", "id", "uid"]),
+                    help="Unique identifier for each observation (e.g. user_id, impression_id).",
                 )
                 pre_date = st.selectbox(
                     "Date Column", cols, key="pre_date",
                     index=find_best_index(cols, ["date", "day", "timestamp", "created_at"]),
+                    help="The date/timestamp column used to determine test duration and daily trends.",
                 )
             with c2:
                 pre_metric = st.selectbox(
                     "Conversion Metric", cols, key="pre_metric",
                     index=find_best_index(cols, ["converted", "conversion", "clicks", "revenue", "action"]),
+                    help="The outcome you're measuring — e.g. 'converted' (0/1), 'revenue', or 'clicks'.",
                 )
-                pre_binary = st.checkbox("Binary metric (proportion)?", value=True, key="pre_binary")
+                pre_binary = st.checkbox(
+                    "Binary metric (proportion)?", value=True, key="pre_binary",
+                    help="Check if the metric is binary (0 or 1, e.g. converted/not). Uncheck for continuous metrics like revenue or time on page.",
+                )
             with c3:
                 pre_group = st.selectbox(
                     "Group Column (optional)", ["— None —"] + cols, key="pre_group",
                     index=0 if find_best_index(cols, ["group", "variant", "ab_group"]) == 0
                     else find_best_index(["— None —"] + cols, ["group", "variant", "ab_group"]),
+                    help="Column that identifies control vs treatment groups. Needed for AA test validation.",
                 )
                 pre_spend = st.selectbox(
                     "Spend Column (optional)", ["— None —"] + cols, key="pre_spend",
+                    help="Cost/spend column for budget estimation. Leave as None if not applicable.",
                 )
                 pre_experiment = st.selectbox(
                     "Experiment Column (optional)", ["— None —"] + cols, key="pre_exp",
+                    help="Column that labels different experiments (e.g. 'AA_test', 'ab_test'). Used to filter for a specific test.",
                 )
 
             has_group = pre_group != "— None —"
@@ -602,15 +613,20 @@ with tab_pre:
                 sample_days = (end_date - start_date).days + 1
 
                 m1, m2, m3, m4 = st.columns(4)
-                m1.metric("Avg Conversion", f"{avg_conversion:.4f}")
-                m2.metric("Sample Size (per group)", f"{sample_size:,.0f}")
-                m3.metric("Total Sample Needed", f"{sample_size * (1 + group_ratio):,.0f}")
-                m4.metric("Test Duration", f"{test_dur} days" if test_dur else "N/A")
+                m1.metric("Avg Conversion", f"{avg_conversion:.4f}",
+                          help="The mean value of your conversion metric across all historical data. This baseline is used to calculate effect size.")
+                m2.metric("Sample Size (per group)", f"{sample_size:,.0f}",
+                          help="Minimum number of observations needed in EACH group (control and treatment) to reliably detect your MDE at the specified power and significance level.")
+                m3.metric("Total Sample Needed", f"{sample_size * (1 + group_ratio):,.0f}",
+                          help="Total observations across all groups combined. Equals sample_size × (1 + group_ratio).")
+                m4.metric("Test Duration", f"{test_dur} days" if test_dur else "N/A",
+                          help="Estimated number of days to collect enough data, based on your historical daily traffic. Rounded up to full weeks to avoid day-of-week bias.")
 
                 budget_val = None
                 if has_spend:
                     budget_val = calc_budget(analysis_data, pre_spend, pre_id, sample_size, group_ratio)
-                    st.metric("Estimated Budget", f"${budget_val:,.2f}")
+                    st.metric("Estimated Budget", f"${budget_val:,.2f}",
+                              help="Projected cost based on your historical average cost per observation multiplied by the total sample needed.")
 
                 with st.expander("Details"):
                     st.markdown(f"""
@@ -643,9 +659,12 @@ with tab_pre:
                         aa_dur = (aa_end - aa_start).days + 1
 
                         a1, a2, a3 = st.columns(3)
-                        a1.metric("AA p-value", f"{aa_results['pvalue']:.4f}")
-                        a2.metric("Control Mean", f"{aa_results['control_mean']:.4f}")
-                        a3.metric("Treatment Mean", f"{aa_results['treatment_mean']:.4f}")
+                        a1.metric("AA p-value", f"{aa_results['pvalue']:.4f}",
+                                  help="p-value from the AA test. A value above α means no significant difference between groups BEFORE the experiment — this is the expected result. If below α, your setup has a problem.")
+                        a2.metric("Control Mean", f"{aa_results['control_mean']:.4f}",
+                                  help="Average conversion in the control group during the pre-test period.")
+                        a3.metric("Treatment Mean", f"{aa_results['treatment_mean']:.4f}",
+                                  help="Average conversion in the treatment group during the pre-test period. Should be close to control mean in a valid AA test.")
 
                         if aa_results["pvalue"] < significance:
                             st.error(
@@ -751,24 +770,31 @@ with tab_post:
                 post_id = st.selectbox(
                     "ID Column", cols_p, key="post_id",
                     index=find_best_index(cols_p, ["impression_id", "user_id", "id", "uid"]),
+                    help="Unique identifier for each observation.",
                 )
                 post_date = st.selectbox(
                     "Date Column", cols_p, key="post_date",
                     index=find_best_index(cols_p, ["date", "day", "timestamp"]),
+                    help="Date column used for novelty effect analysis and daily trend charts.",
                 )
             with p2:
                 post_metric = st.selectbox(
                     "Conversion Metric", cols_p, key="post_metric",
                     index=find_best_index(cols_p, ["converted", "conversion", "clicks", "revenue", "action"]),
+                    help="The outcome metric to compare between control and treatment.",
                 )
-                post_binary = st.checkbox("Binary metric?", value=True, key="post_binary")
+                post_binary = st.checkbox("Binary metric?", value=True, key="post_binary",
+                    help="Check if the metric is binary (0/1). Uncheck for continuous metrics like revenue.",
+                )
             with p3:
                 post_group = st.selectbox(
                     "Group Column", cols_p, key="post_group",
                     index=find_best_index(cols_p, ["group", "variant", "ab_group"]),
+                    help="Column identifying which group each observation belongs to (control vs treatment).",
                 )
                 post_experiment = st.selectbox(
                     "Experiment Column (optional)", ["— None —"] + cols_p, key="post_exp",
+                    help="If your data contains multiple experiments, select the column that labels them.",
                 )
 
             unique_grp_p = sorted(post_data[post_group].dropna().unique().tolist(), key=str)
@@ -829,8 +855,10 @@ with tab_post:
                 st.subheader("2. Sample Ratio Mismatch (SRM)")
                 srm = run_srm_test(ab_data, post_group, post_ctrl, post_trt, post_id)
                 s1, s2 = st.columns(2)
-                s1.metric("SRM p-value", f"{srm['pvalue']:.4f}")
-                s2.metric("Chi-square statistic", f"{srm['chi_stat']:.4f}")
+                s1.metric("SRM p-value", f"{srm['pvalue']:.4f}",
+                          help="Sample Ratio Mismatch test. Checks if the split between control and treatment matches the expected ratio (usually 50/50). A low p-value (< α) means the randomization is broken and results cannot be trusted.")
+                s2.metric("Chi-square statistic", f"{srm['chi_stat']:.4f}",
+                          help="The chi-square test statistic. Measures how far the observed group sizes deviate from the expected sizes. Higher values indicate greater mismatch.")
 
                 st.markdown(f"**Observed**: {srm['observed']}  |  **Expected**: {srm['expected']}")
 
@@ -848,18 +876,24 @@ with tab_post:
                 ab = run_ab_test(ab_data, post_group, post_ctrl, post_trt, post_metric, significance)
 
                 r1, r2, r3 = st.columns(3)
-                r1.metric("p-value", f"{ab['pvalue']:.4f}")
-                r2.metric("Control Mean", f"{ab['control_mean']:.4f}")
+                r1.metric("p-value", f"{ab['pvalue']:.4f}",
+                          help="The probability of seeing this result (or more extreme) if there were truly no difference between groups. Below α → statistically significant. This is NOT the probability that the treatment doesn't work.")
+                r2.metric("Control Mean", f"{ab['control_mean']:.4f}",
+                          help="Average value of the conversion metric in the control group (the baseline).")
                 r3.metric(
                     "Treatment Mean",
                     f"{ab['treatment_mean']:.4f}",
                     delta=f"{ab['relative_lift']:.2%}",
+                    help="Average value of the conversion metric in the treatment group. The delta shows the relative change compared to control.",
                 )
 
                 r4, r5, r6 = st.columns(3)
-                r4.metric("Absolute Lift", f"{ab['absolute_lift']:.4f}")
-                r5.metric("Relative Lift", f"{ab['relative_lift']:.2%}")
-                r6.metric("95% CI (relative)", f"[{ab['lower_lift']:.2%}, {ab['upper_lift']:.2%}]")
+                r4.metric("Absolute Lift", f"{ab['absolute_lift']:.4f}",
+                          help="The raw difference: treatment_mean − control_mean. Tells you the actual magnitude of change in the same units as your metric.")
+                r5.metric("Relative Lift", f"{ab['relative_lift']:.2%}",
+                          help="The percentage change: (treatment − control) / control × 100%. More intuitive for stakeholders — e.g. '5% improvement in conversion rate'.")
+                r6.metric("95% CI (relative)", f"[{ab['lower_lift']:.2%}, {ab['upper_lift']:.2%}]",
+                          help="95% confidence interval for the relative lift. If this range doesn't cross 0%, the result is statistically significant. If the lower bound exceeds your MDE, the result is also practically significant.")
 
                 with st.expander("Statistical Details"):
                     st.markdown(f"""
@@ -886,8 +920,10 @@ with tab_post:
                         ab_data, post_group, post_ctrl, post_trt, post_date, post_metric
                     )
                     n1, n2 = st.columns(2)
-                    n1.metric("Novelty p-value", f"{novelty['pvalue']:.4f}")
-                    n2.metric("Time coefficient", f"{novelty['coef']:.6f}")
+                    n1.metric("Novelty p-value", f"{novelty['pvalue']:.4f}",
+                              help="Tests whether the treatment effect changes over time using linear regression. A low p-value (< α) suggests the treatment effect is not stable — likely a novelty or fatigue effect.")
+                    n2.metric("Time coefficient", f"{novelty['coef']:.6f}",
+                              help="The slope of treatment conversion over time. Negative = performance is declining (novelty wearing off). Positive = performance is improving over time.")
 
                     if novelty["pvalue"] < significance:
                         st.warning(
